@@ -1,0 +1,57 @@
+<div class="page">
+  <div class="page-header">
+    <h1>Déposer un rapport</h1>
+    <p>Soumettez votre rapport de fin de cycle au format PDF (max 20 Mo).</p>
+  </div>
+
+  <div class="form-card">
+    @if (success()) { <div class="alert-success">✓ {{ success() }}</div> }
+    @if (error())   { <div class="alert-error">⚠️ {{ error() }}</div> }
+
+    <form (ngSubmit)="submit()">
+      <div class="form-group">
+        <label>Titre du rapport <span class="optional">(optionnel)</span></label>
+        <input type="text" [(ngModel)]="titre" name="titre"
+          placeholder="Ex : Rapport de stage — Développement web" />
+      </div>
+
+      <!-- Zone drag & drop -->
+      <div class="form-group">
+        <label>Fichier PDF <span class="req">*</span></label>
+        <div
+          class="drop-zone"
+          [class.drag-active]="dragOver()"
+          [class.has-file]="fichier"
+          (dragover)="$event.preventDefault(); dragOver.set(true)"
+          (dragleave)="dragOver.set(false)"
+          (drop)="onDrop($event)"
+          (click)="fileInput.click()"
+        >
+          @if (fichier) {
+            <div class="file-preview">
+              <span class="file-icon">📄</span>
+              <div class="file-info">
+                <span class="file-name">{{ fichier.name }}</span>
+                <span class="file-size">{{ fileSize }}</span>
+              </div>
+              <button type="button" class="file-remove" (click)="$event.stopPropagation(); fichier = null">✕</button>
+            </div>
+          } @else {
+            <div class="drop-placeholder">
+              <span class="drop-icon">📤</span>
+              <p>Glissez votre PDF ici ou <span class="drop-link">cliquez pour parcourir</span></p>
+              <span class="drop-hint">PDF uniquement — max 20 Mo</span>
+            </div>
+          }
+        </div>
+        <input #fileInput type="file" accept=".pdf" (change)="onFileChange($event)" style="display:none" />
+      </div>
+
+      <div class="form-footer">
+        <button type="submit" class="btn-submit" [disabled]="loading() || !fichier">
+          {{ loading() ? 'Envoi en cours…' : '📤 Déposer le rapport' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

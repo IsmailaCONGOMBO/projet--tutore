@@ -1,0 +1,89 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Rapports déposés</h1>
+      <p>{{ rapportsFiltres.length }} rapport(s) affiché(s)</p>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filter-tabs">
+    <button class="filter-tab" [class.active-all]="filtre() === 'TOUS'" (click)="filtre.set('TOUS')">
+      Tous ({{ rapports().length }})
+    </button>
+    <button class="filter-tab" [class.active-attente]="filtre() === 'EN_ATTENTE'" (click)="filtre.set('EN_ATTENTE')">
+      ⏳ En attente ({{ countStatut('EN_ATTENTE') }})
+    </button>
+    <button class="filter-tab" [class.active-valide]="filtre() === 'ACCEPTE'" (click)="filtre.set('ACCEPTE')">
+      ✅ Acceptés ({{ countStatut('ACCEPTE') }})
+    </button>
+    <button class="filter-tab" [class.active-rejete]="filtre() === 'REJETE'" (click)="filtre.set('REJETE')">
+      ❌ Rejetés ({{ countStatut('REJETE') }})
+    </button>
+  </div>
+
+  <div class="table-card">
+    @if (rapportsFiltres.length === 0) {
+      <div class="empty-state">
+        <span>📄</span>
+        <p>Aucun rapport dans cette catégorie.</p>
+      </div>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Rapport</th>
+            <th>Étudiant</th>
+            <th>Taux plagiat</th>
+            <th>Statut</th>
+            <th>Date dépôt</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rapportsFiltres; track r.id) {
+            <tr>
+              <td>
+                <div class="td-main">{{ r.titre }}</div>
+              </td>
+              <td>
+                <div class="etudiant-cell">
+                  <span class="etudiant-name">{{ r.etudiant.name }}</span>
+                  <span class="etudiant-email">{{ r.etudiant.email }}</span>
+                </div>
+              </td>
+              <td>
+                @if (r.taux_plagiat !== null) {
+                  <div class="taux-inline">
+                    <span class="taux-pct" [style.color]="tauxColor(r.taux_plagiat)">
+                      {{ r.taux_plagiat }}%
+                    </span>
+                    <div class="taux-bar-track">
+                      <div class="taux-bar-fill"
+                        [style.width.%]="r.taux_plagiat"
+                        [style.background]="tauxBg(r.taux_plagiat)">
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <span class="taux-na">Non analysé</span>
+                }
+              </td>
+              <td>
+                <span class="badge badge-rapport-{{ r.statut }}">
+                  {{ r.statut === 'EN_ATTENTE' ? 'En attente' : r.statut === 'ACCEPTE' ? 'Accepté' : 'Rejeté' }}
+                </span>
+              </td>
+              <td class="td-date">{{ r.created_at | slice:0:10 }}</td>
+              <td>
+                <a [routerLink]="['/chef/plagiat', r.id]" class="btn-analyser">
+                  🔍 {{ r.taux_plagiat != null ? 'Voir analyse' : 'Analyser' }}
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

@@ -1,0 +1,44 @@
+<div class="dash-wrapper">
+  <nav class="dash-nav">
+    <div class="nav-brand">
+      <span class="nav-icon">🎓</span>
+      <span>IBAM</span>
+      <span class="nav-divider"></span>
+      <span class="nav-subtitle">Administration</span>
+    </div>
+    <div class="nav-right">
+      <span class="nav-user">{{ user.name || user.email }}</span>
+      <button (click)="logout()" class="btn-logout">Déconnexion</button>
+    </div>
+  </nav>
+
+  <main class="dash-main">
+    <div class="dash-welcome">
+      <h1>Bienvenue, <span>{{ user.name || 'Administrateur' }}</span> 👋</h1>
+      <p>Tableau de bord — Système de Détection de Plagiat</p>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash-card" routerLink="/utilisateurs">
+        <div class="dash-card-icon">👥</div>
+        <div class="dash-card-label">Utilisateurs</div>
+        <div class="dash-card-hint">Gérer les comptes</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-icon">📄</div>
+        <div class="dash-card-label">Rapports</div>
+        <div class="dash-card-hint">Analyser les soumissions</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-icon">⚙️</div>
+        <div class="dash-card-label">Paramètres</div>
+        <div class="dash-card-hint">Configurer le système</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-icon">🔔</div>
+        <div class="dash-card-label">Notifications</div>
+        <div class="dash-card-hint">Alertes étudiants</div>
+      </div>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,170 @@
+<div class="page">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a routerLink="/chef/rapports">← Rapports déposés</a>
+    <span class="bc-sep">›</span>
+    <span>Analyse plagiat</span>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">Chargement de l'analyse…</div>
+  } @else if (analyse()) {
+
+    <div class="page-header">
+      <div>
+        <h1>Analyse de plagiat</h1>
+        <p>{{ analyse()!.titre }}</p>
+      </div>
+      <!-- Badge statut actuel -->
+      <span class="statut-badge statut-{{ analyse()!.statut_rapport }}">
+        {{ analyse()!.statut_rapport === 'EN_ATTENTE' ? '⏳ En attente de décision'
+           : analyse()!.statut_rapport === 'ACCEPTE'  ? '✅ Rapport accepté'
+           : '❌ Rapport rejeté' }}
+      </span>
+    </div>
+
+    @if (success()) { <div class="alert-success">{{ success() }}</div> }
+
+    <!-- Info rapport -->
+    <div class="info-band">
+      <div class="info-item">
+        <span class="info-label">Étudiant</span>
+        <span class="info-val">{{ analyse()!.etudiant.name }}</span>
+        <span class="info-sub">{{ analyse()!.etudiant.email }}</span>
+      </div>
+      <div class="info-sep"></div>
+      <div class="info-item">
+        <span class="info-label">Date d'analyse</span>
+        <span class="info-val">{{ analyse()!.date_analyse }}</span>
+      </div>
+      <div class="info-sep"></div>
+      <div class="info-item">
+        <span class="info-label">Passages suspects</span>
+        <span class="info-val">{{ analyse()!.passages_suspects.length }}</span>
+      </div>
+    </div>
+
+    <!-- Score principal -->
+    <div class="score-card" [style.background]="tauxBg" [style.border-color]="tauxColor + '50'">
+      <div class="score-circle" [style.border-color]="tauxColor">
+        <span class="score-num" [style.color]="tauxColor">{{ taux }}%</span>
+        <span class="score-sub">plagiat</span>
+      </div>
+      <div class="score-right">
+        <span class="score-label" [style.color]="tauxColor">{{ tauxLabel }}</span>
+        <div class="progress-track">
+          <div class="progress-fill" [style.width.%]="taux" [style.background]="tauxColor"></div>
+        </div>
+        <div class="progress-scale">
+          <span>0%</span>
+          <span style="color:#16a34a">Acceptable &lt;20%</span>
+          <span style="color:#d97706">Attention &lt;40%</span>
+          <span style="color:#dc2626">Élevé ≥40%</span>
+          <span>100%</span>
+        </div>
+
+        <!-- Boutons décision -->
+        @if (analyse()!.statut_rapport === 'EN_ATTENTE') {
+          <div class="decision-btns">
+            <button class="btn-accepter" (click)="ouvrirDecision('ACCEPTE')">
+              ✅ Accepter le rapport
+            </button>
+            <button class="btn-rejeter-rapport" (click)="ouvrirDecision('REJETE')">
+              ❌ Rejeter le rapport
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Passages suspects -->
+    <div class="section-title" style="margin-top:2rem">
+      Passages suspects ({{ analyse()!.passages_suspects.length }})
+    </div>
+
+    @if (analyse()!.passages_suspects.length === 0) {
+      <div class="no-passages">✓ Aucun passage suspect identifié.</div>
+    } @else {
+      <div class="passages-list">
+        @for (p of analyse()!.passages_suspects; track p.source) {
+          <div class="passage-card">
+            <div class="passage-header">
+              <span class="passage-source">🔗 {{ p.source }}</span>
+              <span class="passage-sim"
+                [class.sim-warn]="p.similarite >= 20 && p.similarite < 40"
+                [class.sim-bad]="p.similarite >= 40">
+                {{ p.similarite }}% similaire
+              </span>
+            </div>
+            <p class="passage-text">« {{ p.texte }} »</p>
+          </div>
+        }
+      </div>
+    }
+
+  } @else {
+    <div class="pending-state">
+      <span class="pending-icon">🔧</span>
+      <h3>Analyse non disponible</h3>
+      <p>L'algorithme de détection de plagiat sera intégré prochainement.<br>
+         Une fois implémenté, les résultats s'afficheront ici automatiquement.</p>
+      <a routerLink="/chef/rapports" class="btn-retour">← Retour aux rapports</a>
+    </div>
+  }
+</div>
+
+<!-- Modal décision -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="showModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+
+      @if (typeDecision() === 'ACCEPTE') {
+        <div class="modal-header modal-header-green">
+          <h3>✅ Accepter le rapport</h3>
+          <button class="modal-close" (click)="showModal.set(false)">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-confirm-text">
+            Vous êtes sur le point d'<strong>accepter</strong> le rapport de
+            <strong>{{ analyse()!.etudiant.name }}</strong>.
+            Le taux de plagiat est de <strong [style.color]="tauxColor">{{ taux }}%</strong>.
+          </p>
+          <p class="modal-confirm-sub">Cette action notifiera l'étudiant et l'enseignant.</p>
+        </div>
+      } @else {
+        <div class="modal-header">
+          <h3>❌ Rejeter le rapport</h3>
+          <button class="modal-close" (click)="showModal.set(false)">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-confirm-text" style="margin-bottom:1rem">
+            Rapport de <strong>{{ analyse()!.etudiant.name }}</strong> —
+            Taux : <strong [style.color]="tauxColor">{{ taux }}%</strong>
+          </p>
+          @if (decisionError()) { <div class="alert-error">⚠️ {{ decisionError() }}</div> }
+          <div class="form-group">
+            <label>Motif du rejet <span class="req">*</span></label>
+            <textarea [(ngModel)]="motifRejet" name="motif" rows="4"
+              placeholder="Expliquez pourquoi ce rapport est rejeté (taux trop élevé, passages copiés, etc.)…">
+            </textarea>
+          </div>
+        </div>
+      }
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showModal.set(false)">Annuler</button>
+        @if (typeDecision() === 'ACCEPTE') {
+          <button class="btn-confirmer-accepter" (click)="confirmerDecision()" [disabled]="submitting()">
+            {{ submitting() ? 'Traitement…' : 'Confirmer l\'acceptation' }}
+          </button>
+        } @else {
+          <button class="btn-confirmer-rejeter" (click)="confirmerDecision()" [disabled]="submitting()">
+            {{ submitting() ? 'Traitement…' : 'Confirmer le rejet' }}
+          </button>
+        }
+      </div>
+
+    </div>
+  </div>
+}

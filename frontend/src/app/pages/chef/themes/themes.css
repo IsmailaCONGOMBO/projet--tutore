@@ -1,0 +1,28 @@
+@import '../chef-shared.css';
+
+.td-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+.modal-theme-titre {
+  font-size: 0.9rem; font-weight: 600; color: var(--blue-900);
+  background: var(--off-white); border-radius: var(--radius-sm);
+  padding: 0.6rem 0.9rem; margin-bottom: 1rem;
+  border-left: 3px solid var(--blue-400);
+}
+
+.btn-cancel {
+  padding: 0.65rem 1.3rem; background: transparent;
+  border: 1.5px solid var(--off-white-2); border-radius: var(--radius-sm);
+  color: var(--text-mid); font-size: 0.875rem; font-family: inherit;
+  cursor: pointer; transition: background 0.15s;
+}
+.btn-cancel:hover { background: var(--off-white); }
+
+.btn-rejeter-confirm {
+  padding: 0.65rem 1.4rem; background: #dc2626; color: white;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 0.875rem; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: background 0.2s;
+  box-shadow: 0 4px 12px rgba(220,38,38,0.3);
+}
+.btn-rejeter-confirm:hover:not(:disabled) { background: #b91c1c; }
+.btn-rejeter-confirm:disabled { opacity: 0.65; cursor: not-allowed; box-shadow: none; }

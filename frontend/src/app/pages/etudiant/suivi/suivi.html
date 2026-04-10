@@ -1,0 +1,65 @@
+<div class="page">
+  <div class="page-header">
+    <h1>Mes demandes</h1>
+    <p>Suivez l'état de vos thèmes et rapports soumis.</p>
+  </div>
+
+  <!-- Thèmes -->
+  <div class="section-title">Thèmes soumis</div>
+  <div class="table-card">
+    @if (themes().length === 0) {
+      <div class="empty-state"><span>💡</span><p>Aucun thème soumis.</p></div>
+    } @else {
+      <table>
+        <thead><tr><th>Titre</th><th>Statut</th><th>Date</th></tr></thead>
+        <tbody>
+          @for (t of themes(); track t.id) {
+            <tr>
+              <td class="td-main">{{ t.titre }}</td>
+              <td><span class="badge badge-{{ t.statut }}">{{ statutLabels[t.statut!] }}</span></td>
+              <td class="td-date">{{ t.created_at | slice:0:10 }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  <!-- Rapports -->
+  <div class="section-title" style="margin-top:2rem">Rapports déposés</div>
+  <div class="table-card">
+    @if (loading()) {
+      <div class="empty-state"><p>Chargement…</p></div>
+    } @else if (rapports().length === 0) {
+      <div class="empty-state"><span>📄</span><p>Aucun rapport déposé.</p></div>
+    } @else {
+      <table>
+        <thead><tr><th>Titre</th><th>Statut</th><th>Taux plagiat</th><th>Date</th></tr></thead>
+        <tbody>
+          @for (r of rapports(); track r.id) {
+            <tr>
+              <td class="td-main">{{ r.titre || 'Rapport #' + r.id }}</td>
+              <td><span class="badge badge-{{ r.statut }}">{{ statutLabels[r.statut!] }}</span></td>
+              <td>
+                @if (r.taux_plagiat !== null && r.taux_plagiat !== undefined) {
+                  <div class="taux-wrap">
+                    <span class="taux-val" [class.taux-ok]="r.taux_plagiat! < 20" [class.taux-warn]="r.taux_plagiat! >= 20 && r.taux_plagiat! < 40" [class.taux-bad]="r.taux_plagiat! >= 40">
+                      {{ r.taux_plagiat }}%
+                    </span>
+                    <div class="taux-bar-track">
+                      <div class="taux-bar-fill" [style.width.%]="r.taux_plagiat"
+                        [class.taux-ok]="r.taux_plagiat! < 20"
+                        [class.taux-warn]="r.taux_plagiat! >= 20 && r.taux_plagiat! < 40"
+                        [class.taux-bad]="r.taux_plagiat! >= 40"></div>
+                    </div>
+                  </div>
+                } @else { <span class="td-na">—</span> }
+              </td>
+              <td class="td-date">{{ r.created_at | slice:0:10 }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

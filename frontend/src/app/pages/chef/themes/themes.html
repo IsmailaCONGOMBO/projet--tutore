@@ -1,0 +1,87 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Thèmes soumis</h1>
+      <p>{{ themes().length }} thème(s) en attente de décision</p>
+    </div>
+  </div>
+
+  @if (success()) { <div class="alert-success">{{ success() }}</div> }
+  @if (error() && !showModal()) { <div class="alert-error">⚠️ {{ error() }}</div> }
+
+  <div class="table-card">
+    @if (loading()) {
+      <div class="empty-state"><p>Chargement…</p></div>
+    } @else if (themes().length === 0) {
+      <div class="empty-state">
+        <span>✅</span>
+        <p>Aucun thème en attente. Tout est traité !</p>
+      </div>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Thème</th>
+            <th>Étudiant</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of themes(); track t.id) {
+            <tr>
+              <td>
+                <div class="td-main">{{ t.titre }}</div>
+                <div class="theme-desc">{{ t.description }}</div>
+              </td>
+              <td>
+                <div class="etudiant-cell">
+                  <span class="etudiant-name">{{ t.etudiant?.name || '—' }}</span>
+                  <span class="etudiant-email">{{ t.etudiant?.email || '' }}</span>
+                </div>
+              </td>
+              <td class="td-date">{{ t.created_at | slice:0:10 }}</td>
+              <td>
+                <span class="badge badge-{{ t.statut }}">
+                  {{ t.statut === 'EN_ATTENTE' ? 'En attente' : t.statut }}
+                </span>
+              </td>
+              <td class="td-actions">
+                <button class="btn-valider" (click)="valider(t)">✓ Valider</button>
+                <button class="btn-rejeter" (click)="ouvrirRejet(t)">✕ Rejeter</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+<!-- Modal motif de rejet -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="showModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>❌ Motif de rejet</h3>
+        <button class="modal-close" (click)="showModal.set(false)">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-theme-titre">« {{ themeEnCours()?.titre }} »</p>
+        @if (error()) { <div class="alert-error" style="margin-bottom:1rem">⚠️ {{ error() }}</div> }
+        <div class="form-group">
+          <label>Motif du rejet <span class="req">*</span></label>
+          <textarea [(ngModel)]="motif" name="motif" rows="4"
+            placeholder="Expliquez pourquoi ce thème est rejeté…"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showModal.set(false)">Annuler</button>
+        <button class="btn-rejeter-confirm" (click)="confirmerRejet()" [disabled]="submitting()">
+          {{ submitting() ? 'Envoi…' : 'Confirmer le rejet' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

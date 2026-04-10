@@ -1,0 +1,50 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Vérification d'unicité</h1>
+      <p>Recherchez si un thème similaire existe déjà dans la base.</p>
+    </div>
+  </div>
+
+  <div class="form-card">
+    @if (error()) { <div class="alert-error">⚠️ {{ error() }}</div> }
+
+    <div class="search-bar">
+      <input
+        type="text"
+        [(ngModel)]="motCle"
+        placeholder="Ex : application de gestion, détection de plagiat…"
+        (keyup.enter)="rechercher()"
+      />
+      <button class="btn-search" (click)="rechercher()" [disabled]="loading()">
+        {{ loading() ? 'Recherche…' : '🔎 Vérifier' }}
+      </button>
+    </div>
+
+    <!-- Résultats -->
+    @if (resultats() !== null) {
+      @if (resultats()!.length === 0) {
+        <div class="result-unique">
+          ✅ Aucun thème similaire trouvé. Ce thème semble <strong>unique</strong>.
+        </div>
+      } @else {
+        <div class="alert-warn">
+          ⚠️ <strong>{{ resultats()!.length }} thème(s) similaire(s)</strong> trouvé(s) dans la base :
+        </div>
+        <div class="similaires-list">
+          @for (t of resultats()!; track t.id) {
+            <div class="result-similaire">
+              <div class="sim-titre">{{ t.titre }}</div>
+              <div class="sim-meta">
+                Étudiant : {{ t.etudiant?.name || '—' }} —
+                Statut : <span class="badge badge-{{ t.statut }}">{{ t.statut }}</span> —
+                {{ t.created_at | slice:0:10 }}
+              </div>
+              <div class="sim-desc">{{ t.description }}</div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+</div>

@@ -1,0 +1,56 @@
+<div class="page-header">
+  <div class="header-content">
+    <h1 class="page-title">Rapports Archivés</h1>
+    <p class="page-subtitle">Consultez l'historique des rapports finis et archivés.</p>
+  </div>
+</div>
+
+<div class="content-card">
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Chargement des archives...</span>
+    </div>
+  } @else {
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Titre du Rapport</th>
+            <th>Étudiant</th>
+            <th>Date Dépot</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rapport of archives(); track rapport.id) {
+            <tr>
+              <td class="id-cell">#{{ rapport.id }}</td>
+              <td class="title-cell"><strong>{{ rapport.titre }}</strong></td>
+              <td>{{ rapport.etudiant }}</td>
+              <td>{{ rapport.date_depot | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <span class="status-badge" style="background: #f1f5f9; color: #475569;">
+                  {{ rapport.statut }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-icon download" (click)="download(rapport.id)" title="Télécharger">
+                    <span>⬇️</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-cell">Aucun rapport archivé trouvé.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

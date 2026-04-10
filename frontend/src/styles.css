@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --blue-900: #0d1b4b;
+  --blue-800: #1a237e;
+  --blue-700: #1e2f9e;
+  --blue-600: #2a3eb1;
+  --blue-400: #5c6bc0;
+  --blue-100: #e8eaf6;
+  --blue-50:  #f0f2fc;
+
+  --off-white: #f7f6f2;
+  --off-white-2: #eeecea;
+  --white: #ffffff;
+
+  --text-dark: #1a1f36;
+  --text-mid:  #4a5068;
+  --text-light: #8892a4;
+
+  --shadow-sm: 0 2px 8px rgba(13,27,75,0.08);
+  --shadow-md: 0 8px 32px rgba(13,27,75,0.12);
+  --shadow-lg: 0 20px 60px rgba(13,27,75,0.18);
+
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background: var(--off-white);
+  color: var(--text-dark);
+  -webkit-font-smoothing: antialiased;
+}

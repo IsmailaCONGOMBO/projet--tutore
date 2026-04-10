@@ -1,0 +1,49 @@
+<div class="app-shell" [class.sidebar-collapsed]="!sidebarOpen()">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">🎓</span>
+      <span class="brand-text">IBAM</span>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar">{{ (user.name || 'C').charAt(0).toUpperCase() }}</div>
+      <div class="user-info">
+        <span class="user-name">{{ user.name || 'Chef Dept.' }}</span>
+        <span class="user-role">Chef de Département</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">MENU</span>
+      @for (item of menu; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <button class="sidebar-logout" (click)="logout()">
+      <span>⎋</span>
+      <span>Déconnexion</span>
+    </button>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <button class="toggle-btn" (click)="toggleSidebar()">☰</button>
+      <div class="topbar-center">
+        <span class="topbar-title">Espace Chef de Département</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-user">{{ user.name || user.email }}</span>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <router-outlet />
+    </main>
+  </div>
+
+</div>

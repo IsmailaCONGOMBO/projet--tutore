@@ -1,0 +1,36 @@
+<div class="page">
+  <div class="page-header">
+    <h1>Ma note finale</h1>
+    <p>Résultat de votre rapport de fin de cycle.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">Chargement…</div>
+  } @else if (error()) {
+    <div class="alert-error">⚠️ {{ error() }}</div>
+  } @else if (note()) {
+    <div class="note-card">
+      <div class="note-circle" [style.border-color]="noteColor">
+        <span class="note-val" [style.color]="noteColor">{{ note()!.valeur }}</span>
+        <span class="note-denom">/20</span>
+      </div>
+      <div class="note-details">
+        <div class="mention-badge" [style.color]="noteColor" [style.background]="noteColor + '18'">
+          {{ mention }}
+        </div>
+        @if (note()!.enseignant) {
+          <p class="note-meta">Attribué par : <strong>{{ note()!.enseignant }}</strong></p>
+        }
+        @if (note()!.date_attribution) {
+          <p class="note-meta">Date : <strong>{{ note()!.date_attribution | slice:0:10 }}</strong></p>
+        }
+        @if (note()!.commentaire) {
+          <div class="commentaire">
+            <span class="commentaire-label">Commentaire de l'enseignant</span>
+            <p>{{ note()!.commentaire }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

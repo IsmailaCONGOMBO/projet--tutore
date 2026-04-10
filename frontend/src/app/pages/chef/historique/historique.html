@@ -1,0 +1,71 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Historique des décisions</h1>
+      <p>{{ filtres().length }} thème(s) affiché(s)</p>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filter-tabs">
+    <button class="filter-tab" [class.active-all]="filtre() === 'TOUS'" (click)="setFiltre('TOUS')">
+      Tous ({{ tous().length }})
+    </button>
+    <button class="filter-tab" [class.active-valide]="filtre() === 'VALIDE'" (click)="setFiltre('VALIDE')">
+      ✅ Validés ({{ countStatut('VALIDE') }})
+    </button>
+    <button class="filter-tab" [class.active-rejete]="filtre() === 'REJETE'" (click)="setFiltre('REJETE')">
+      ❌ Rejetés ({{ countStatut('REJETE') }})
+    </button>
+  </div>
+
+  <div class="table-card">
+    @if (loading()) {
+      <div class="empty-state"><p>Chargement…</p></div>
+    } @else if (filtres().length === 0) {
+      <div class="empty-state">
+        <span>📋</span>
+        <p>Aucune décision enregistrée.</p>
+      </div>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Thème</th>
+            <th>Étudiant</th>
+            <th>Décision</th>
+            <th>Motif de rejet</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of filtres(); track t.id) {
+            <tr>
+              <td>
+                <div class="td-main">{{ t.titre }}</div>
+                <div class="theme-desc">{{ t.description }}</div>
+              </td>
+              <td>
+                <div class="etudiant-cell">
+                  <span class="etudiant-name">{{ t.etudiant?.name || '—' }}</span>
+                  <span class="etudiant-email">{{ t.etudiant?.email || '' }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge badge-{{ t.statut }}">{{ statutLabels[t.statut] }}</span>
+              </td>
+              <td>
+                @if (t.motif_rejet) {
+                  <span class="motif-cell">{{ t.motif_rejet }}</span>
+                } @else {
+                  <span class="td-na">—</span>
+                }
+              </td>
+              <td class="td-date">{{ t.updated_at | slice:0:10 }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

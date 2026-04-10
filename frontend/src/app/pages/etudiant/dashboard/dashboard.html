@@ -1,0 +1,72 @@
+<div class="page">
+
+  <!-- En-tête -->
+  <div class="page-header">
+    <div>
+      <h1>Bonjour, <span>{{ user.name || 'Étudiant' }}</span> 👋</h1>
+      <p>Voici un résumé de votre activité sur la plateforme.</p>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon blue">📄</div>
+      <div class="stat-body">
+        <span class="stat-value">{{ nbRapports() }}</span>
+        <span class="stat-label">Rapport(s) déposé(s)</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">💡</div>
+      <div class="stat-body">
+        <span class="stat-value">{{ nbThemes() }}</span>
+        <span class="stat-label">Thème(s) soumis</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange">🔔</div>
+      <div class="stat-body">
+        <span class="stat-value">{{ nbNotifs() }}</span>
+        <span class="stat-label">Notification(s) non lue(s)</span>
+      </div>
+    </div>
+    <div class="stat-card plagiat-card">
+      <div class="stat-icon purple">🔍</div>
+      <div class="stat-body">
+        @if (dernierTaux() !== null) {
+          <span class="stat-value" [style.color]="tauxColor">{{ dernierTaux() }}%</span>
+          <span class="stat-label">Taux de plagiat — <strong [style.color]="tauxColor">{{ tauxLabel }}</strong></span>
+          <div class="mini-bar-track">
+            <div class="mini-bar-fill" [style.width.%]="dernierTaux()!" [style.background]="tauxColor"></div>
+          </div>
+        } @else {
+          <span class="stat-value">—</span>
+          <span class="stat-label">Aucune analyse disponible</span>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Statut dernier rapport -->
+  <div class="section-title">Dernier rapport</div>
+  <div class="status-banner">
+    <span class="status-dot" [class]="'dot-' + dernierStatut()"></span>
+    <span>Statut : </span>
+    <span class="status-badge" [class]="'badge-' + dernierStatut()">{{ dernierStatut() }}</span>
+    <a routerLink="../suivi" class="status-link">Voir le détail →</a>
+  </div>
+
+  <!-- Raccourcis -->
+  <div class="section-title">Actions rapides</div>
+  <div class="shortcuts-grid">
+    @for (r of raccourcis; track r.path) {
+      <a [routerLink]="r.path" class="shortcut-card shortcut-{{ r.color }}">
+        <span class="shortcut-icon">{{ r.icon }}</span>
+        <span class="shortcut-label">{{ r.label }}</span>
+        <span class="shortcut-arrow">→</span>
+      </a>
+    }
+  </div>
+
+</div>

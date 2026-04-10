@@ -1,0 +1,20 @@
+/* Réutilise le même layout que l'espace étudiant */
+@import '../../etudiant/layout/layout.css';
+
+/* Accent couleur spécifique chef : teal/vert-bleu */
+.sidebar { background: #0d2137; }
+.nav-item.active { background: #0e7490; box-shadow: 0 2px 8px rgba(14,116,144,0.4); }
+.user-avatar { background: #0e7490; }
+
+.topbar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+.topbar-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-light);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

@@ -1,0 +1,189 @@
+@import '../etudiant/etudiant-shared.css';
+
+/* ── Surcharges spécifiques chef ─────────────────────── */
+.page { max-width: 1000px; }
+
+/* Stats dashboard chef */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+}
+.stat-card {
+  background: var(--white);
+  border: 1px solid var(--off-white-2);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+}
+.stat-card.orange::after { background: #f59e0b; }
+.stat-card.green::after  { background: #22c55e; }
+.stat-card.red::after    { background: #ef4444; }
+.stat-card.blue::after   { background: var(--blue-600); }
+.stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+.stat-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; flex-shrink: 0;
+}
+.stat-icon.orange { background: #fff7ed; }
+.stat-icon.green  { background: #f0fdf4; }
+.stat-icon.red    { background: #fef2f2; }
+.stat-icon.blue   { background: var(--blue-50); }
+
+.stat-body { display: flex; flex-direction: column; gap: 0.2rem; }
+.stat-value { font-size: 2rem; font-weight: 700; color: var(--blue-900); line-height: 1; }
+.stat-label { font-size: 0.8rem; color: var(--text-light); }
+
+/* ── Boutons action tableau ──────────────────────────── */
+.btn-valider {
+  padding: 0.35rem 0.9rem;
+  background: #f0fdf4; color: #166534;
+  border: 1px solid #bbf7d0; border-radius: 6px;
+  font-size: 0.8rem; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: background 0.15s;
+}
+.btn-valider:hover { background: #dcfce7; }
+
+.btn-rejeter {
+  padding: 0.35rem 0.9rem;
+  background: #fff5f5; color: #991b1b;
+  border: 1px solid #fecaca; border-radius: 6px;
+  font-size: 0.8rem; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: background 0.15s;
+}
+.btn-rejeter:hover { background: #fee2e2; }
+
+/* ── Modal rejet ─────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(13,27,75,0.45);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; padding: 1rem;
+}
+.modal {
+  background: var(--white);
+  border-radius: 16px; width: 100%; max-width: 480px;
+  box-shadow: var(--shadow-lg); overflow: hidden;
+}
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.2rem 1.6rem;
+  background: #fef2f2;
+  border-bottom: 1px solid #fecaca;
+}
+.modal-header h3 { font-size: 1rem; font-weight: 700; color: #991b1b; }
+.modal-close {
+  background: none; border: none; font-size: 1.1rem;
+  color: var(--text-light); cursor: pointer; padding: 0.2rem 0.4rem;
+  border-radius: 4px; transition: background 0.15s;
+}
+.modal-close:hover { background: var(--off-white-2); }
+.modal-body { padding: 1.4rem 1.6rem; }
+.modal-footer {
+  display: flex; justify-content: flex-end; gap: 0.75rem;
+  padding: 1rem 1.6rem;
+  border-top: 1px solid var(--off-white-2);
+}
+
+/* ── Recherche unicité ───────────────────────────────── */
+.search-bar {
+  display: flex; gap: 0.75rem; margin-bottom: 1.5rem;
+}
+.search-bar input {
+  flex: 1; padding: 0.75rem 1rem;
+  border: 1.5px solid var(--off-white-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem; font-family: inherit;
+  background: var(--white); outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-bar input:focus {
+  border-color: var(--blue-600);
+  box-shadow: 0 0 0 3px rgba(42,62,177,0.1);
+}
+.btn-search {
+  padding: 0.75rem 1.4rem;
+  background: var(--blue-800); color: var(--white);
+  border: none; border-radius: var(--radius-sm);
+  font-size: 0.9rem; font-weight: 600; font-family: inherit;
+  cursor: pointer; white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(26,35,126,0.25);
+  transition: background 0.2s, transform 0.15s;
+}
+.btn-search:hover:not(:disabled) { background: var(--blue-700); transform: translateY(-1px); }
+.btn-search:disabled { opacity: 0.65; cursor: not-allowed; box-shadow: none; }
+
+/* Résultat unicité */
+.result-unique {
+  background: #f0fdf4; border: 1px solid #bbf7d0;
+  border-left: 3px solid #22c55e;
+  border-radius: var(--radius-sm); padding: 1rem 1.2rem;
+  font-size: 0.875rem; color: #166534;
+}
+.result-similaire {
+  background: #fffbeb; border: 1px solid #fde68a;
+  border-left: 3px solid #f59e0b;
+  border-radius: var(--radius-sm); padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem; font-size: 0.875rem;
+}
+.result-similaire .sim-titre { font-weight: 600; color: var(--text-dark); }
+.result-similaire .sim-meta  { font-size: 0.78rem; color: var(--text-light); margin-top: 0.2rem; }
+
+/* ── Filtres historique ──────────────────────────────── */
+.filter-tabs {
+  display: flex; gap: 0.5rem; margin-bottom: 1.2rem;
+}
+.filter-tab {
+  padding: 0.45rem 1.1rem;
+  border-radius: 100px;
+  border: 1.5px solid var(--off-white-2);
+  background: var(--white);
+  font-size: 0.82rem; font-weight: 500; font-family: inherit;
+  cursor: pointer; color: var(--text-mid);
+  transition: all 0.15s;
+}
+.filter-tab:hover { border-color: var(--blue-400); color: var(--blue-800); }
+.filter-tab.active-all    { background: var(--blue-800); color: white; border-color: var(--blue-800); }
+.filter-tab.active-valide { background: #166534; color: white; border-color: #166534; }
+.filter-tab.active-rejete { background: #991b1b; color: white; border-color: #991b1b; }
+
+/* Motif rejet dans historique */
+.motif-cell {
+  font-size: 0.8rem; color: #991b1b;
+  font-style: italic; max-width: 220px;
+}
+
+/* Description thème (tooltip-like) */
+.theme-desc {
+  font-size: 0.78rem; color: var(--text-light);
+  margin-top: 0.2rem; line-height: 1.4;
+  max-width: 300px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Etudiant cell */
+.etudiant-cell { display: flex; flex-direction: column; }
+.etudiant-name { font-weight: 500; font-size: 0.875rem; }
+.etudiant-email { font-size: 0.75rem; color: var(--text-light); }
+
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .search-bar { flex-direction: column; }
+  .filter-tabs { flex-wrap: wrap; }
+}
