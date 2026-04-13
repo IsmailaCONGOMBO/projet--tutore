@@ -1,31 +1,58 @@
-<div class="page">
-  <div class="page-header">
-    <h1>Soumettre un thème</h1>
-    <p>Proposez votre sujet de stage pour validation par votre encadreur.</p>
+<div class="theme-page">
+  <div class="header">
+    <h1>Gestion de votre Thème</h1>
+    <p>Soumettez votre sujet de rapport et suivez son processus de validation.</p>
   </div>
 
-  <div class="form-card">
-    @if (success()) { <div class="alert-success">✓ {{ success() }}</div> }
-    @if (error())   { <div class="alert-error">⚠️ {{ error() }}</div> }
+  <div class="content-grid">
+    <!-- Formulaire de soumission -->
+    <div class="form-section">
+      <h3>Proposer un nouveau thème</h3>
+      <div class="form-card">
+        @if (success()) { <div class="alert alert-success">{{ success() }}</div> }
+        @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
 
-    <form (ngSubmit)="submit()">
-      <div class="form-group">
-        <label>Titre du thème <span class="req">*</span></label>
-        <input type="text" [(ngModel)]="titre" name="titre"
-          placeholder="Ex : Développement d'une application de gestion scolaire" />
-      </div>
+        <div class="form-group">
+          <label>Titre du thème</label>
+          <input type="text" [(ngModel)]="titre" placeholder="Ex: Étude de la sécurité des APIs REST" [disabled]="loading()">
+        </div>
 
-      <div class="form-group">
-        <label>Description <span class="req">*</span></label>
-        <textarea [(ngModel)]="description" name="description" rows="6"
-          placeholder="Décrivez votre thème de stage en détail : objectifs, méthodologie, résultats attendus…"></textarea>
-      </div>
+        <div class="form-group">
+          <label>Description & Objectifs</label>
+          <textarea [(ngModel)]="description" rows="5" placeholder="Décrivez brièvement votre projet..." [disabled]="loading()"></textarea>
+        </div>
 
-      <div class="form-footer">
-        <button type="submit" class="btn-submit" [disabled]="loading()">
-          {{ loading() ? 'Envoi en cours…' : '💡 Soumettre le thème' }}
+        <button class="btn-primary" (click)="submit()" [disabled]="loading() || !titre || !description">
+          @if (loading()) { <span class="spinner"></span> }
+          Envoyer pour validation
         </button>
       </div>
-    </form>
+    </div>
+
+    <!-- Historique / Statut -->
+    <div class="history-section">
+      <h3>Mes Soumissions</h3>
+      <div class="history-list">
+        @for (t of mesThemes(); track t.id) {
+          <div class="theme-item">
+            <div class="theme-header">
+              <span class="theme-title">{{ t.titre }}</span>
+              <span [class]="'badge ' + getStatusClass(t.statut)">{{ getStatusLabel(t.statut) }}</span>
+            </div>
+            <p class="theme-desc">{{ t.description }}</p>
+            @if (t.motif_rejet) {
+              <div class="rejection-box">
+                <strong>Motif du rejet :</strong> {{ t.motif_rejet }}
+              </div>
+            }
+            <div class="theme-footer">
+              Soumis le {{ t.created_at | date:'dd/MM/yyyy HH:mm' }}
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-state">Vous n'avez pas encore soumis de thème.</div>
+        }
+      </div>
+    </div>
   </div>
 </div>

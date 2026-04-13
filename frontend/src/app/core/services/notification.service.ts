@@ -8,6 +8,14 @@ export interface Notification {
   created_at: string;
 }
 
+export interface NotificationRequest {
+  titre: string;
+  message: string;
+  type: 'themes' | 'rapports' | 'personnalise';
+  cible?: 'tous' | 'etudiants' | 'enseignants' | 'filiere';
+  filiere_id?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private http = inject(HttpClient);
@@ -18,4 +26,9 @@ export class NotificationService {
     return this.http.patch(`${this.api}/notifications/${id}/lire`, {});
   }
   marquerTousLus()   { return this.http.patch(`${this.api}/notifications/lire-tout`, {}); }
+  
+  // Pour le Directeur Adjoint
+  envoyerNotification(data: NotificationRequest) {
+    return this.http.post(`${this.api}/notifications`, data);
+  }
 }

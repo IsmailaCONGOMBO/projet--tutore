@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RapportService } from '../../../core/services/rapport.service';
+import { RapportService, Rapport } from '../../../core/services/rapport.service';
 import { NoteService } from '../../../core/services/note.service';
 
 @Component({
@@ -17,7 +17,7 @@ export class EnseignantNotes implements OnInit {
   private noteService = inject(NoteService);
 
   noteForm: FormGroup;
-  rapports = signal<any[]>([]);
+  rapports = signal<Rapport[]>([]);
   submitting = signal(false);
   message = signal<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -30,9 +30,10 @@ export class EnseignantNotes implements OnInit {
   }
 
   ngOnInit() {
-    this.rapportService.getRapportsAssignes().subscribe(data => {
+    this.rapportService.getAssignes().subscribe(data => {
       // On filtre les rapports qui ne sont pas encore notés pour le formulaire
-      this.rapports.set(data.filter(r => r.statut !== 'NOTÉ'));
+      // ou ceux dont la note a été rejetée
+      this.rapports.set(data.filter((r: Rapport) => r.statut === 'ASSIGNE_ENSEIGNANT' || r.statut === 'NOTE_REJETEE_ADMIN'));
     });
   }
 
@@ -41,14 +42,13 @@ export class EnseignantNotes implements OnInit {
 
     this.submitting.set(true);
     this.noteService.ajouterNote(this.noteForm.value).subscribe({
-      next: (res) => {
+      next: () => {
         this.message.set({ type: 'success', text: 'Note attribuée avec succès !' });
         this.noteForm.reset();
         this.submitting.set(false);
-        // Rafraîchir la liste des rapports disponibles
         this.ngOnInit();
       },
-      error: (err) => {
+      error: () => {
         this.message.set({ type: 'error', text: 'Une erreur est survenue lors de la soumission.' });
         this.submitting.set(false);
       }

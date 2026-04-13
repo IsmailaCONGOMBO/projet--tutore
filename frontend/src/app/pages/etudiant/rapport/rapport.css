@@ -1,1 +1,136 @@
-@import '../etudiant-shared.css';
+.rapport-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1rem;
+}
+
+.header h1 { font-size: 2.2rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem; }
+.header p { color: #64748b; font-size: 1.1rem; }
+
+.workflow-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .workflow-grid { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.step-num {
+  width: 32px;
+  height: 32px;
+  background: #4f46e5;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.card-header h3 { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0; }
+
+.hint { font-size: 0.9rem; color: #64748b; margin-bottom: 1.5rem; }
+
+.upload-zone {
+  border: 2px dashed #e2e8f0;
+  padding: 2rem;
+  border-radius: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: all 0.2s;
+}
+
+.upload-zone:hover { border-color: #4f46e5; background: #f8fafc; }
+
+input[type="file"] {
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.btn-test, .btn-submit {
+  padding: 1rem;
+  border-radius: 12px;
+  border: none;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-test { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+.btn-test:hover:not(:disabled) { background: #e2e8f0; }
+
+.btn-submit { background: #4f46e5; color: white; margin-top: 1rem; }
+.btn-submit:hover:not(:disabled) { background: #4338ca; transform: translateY(-2px); }
+
+/* Results UI */
+.test-result {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f0fdf4;
+  border-radius: 16px;
+  border: 1px solid #bbf7d0;
+}
+
+.test-result.danger { background: #fef2f2; border-color: #fecdd3; }
+
+.score-display { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; }
+.score-display .label { font-weight: 600; color: #166534; }
+.test-result.danger .score-display .label { color: #991b1b; }
+.score-display .value { font-size: 1.8rem; font-weight: 800; color: #166534; }
+.test-result.danger .score-display .value { color: #dc2626; }
+
+.progress-bar { height: 8px; background: rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; margin: 1rem 0; }
+.progress-bar .fill { height: 100%; background: #10b981; transition: width 0.8s ease; }
+.test-result.danger .progress-bar .fill { background: #ef4444; }
+
+.status-msg { font-size: 0.9rem; font-weight: 600; margin: 0; }
+
+/* Table Section */
+.history-section { margin-top: 2rem; }
+.history-section h3 { margin-bottom: 1.5rem; color: #1e293b; }
+
+.table-container { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; }
+.modern-table { width: 100%; border-collapse: collapse; }
+.modern-table th { text-align: left; padding: 1.25rem; background: #f8fafc; color: #64748b; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+.modern-table td { padding: 1.25rem; border-bottom: 1px solid #f1f5f9; }
+
+.badge { padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+.status-success { background: #ecfdf5; color: #065f46; }
+.status-danger { background: #fef2f2; color: #991b1b; }
+.status-warning { background: #fff7ed; color: #9a3412; }
+
+.btn-icon { color: #64748b; transition: color 0.2s; }
+.btn-icon:hover { color: #4f46e5; }
+
+.spinner { width: 18px; height: 18px; border: 2px solid rgba(0,0,0,0.1); border-top-color: currentColor; border-radius: 50%; animation: rot 0.8s linear infinite; }
+@keyframes rot { to { transform: rotate(360deg); } }

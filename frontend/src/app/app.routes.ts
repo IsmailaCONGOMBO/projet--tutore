@@ -8,8 +8,22 @@ export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./pages/login/login').then(m => m.Login) },
 
   // Espace Admin
-  { path: 'dashboard',    loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard),          canActivate: [adminGuard] },
-  { path: 'utilisateurs', loadComponent: () => import('./pages/utilisateurs/utilisateurs').then(m => m.Utilisateurs),  canActivate: [adminGuard] },
+  {
+    path: 'admin',
+    loadComponent: () => import('./pages/admin/layout/layout').then(m => m.AdminLayout),
+    canActivate: [adminGuard],
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard) },
+      { path: 'utilisateurs', loadComponent: () => import('./pages/utilisateurs/utilisateurs').then(m => m.Utilisateurs) },
+      { path: 'validation-notes', loadComponent: () => import('./pages/admin/validation-notes/validation-notes').then(m => m.AdminValidationNotes) },
+      { path: 'validation-themes', loadComponent: () => import('./pages/admin/validation-themes/validation-themes').then(m => m.AdminValidationThemes) },
+      { path: 'rapports-corrections', loadComponent: () => import('./pages/admin/rapports-corrections/rapports-corrections').then(m => m.AdminRapportsCorrections) },
+      { path: 'notifications', loadComponent: () => import('./pages/admin/notifications/notifications').then(m => m.AdminNotifications) },
+      { path: 'statistiques', loadComponent: () => import('./pages/admin/statistiques/statistiques').then(m => m.AdminStatistiques) },
+      { path: 'parametres', loadComponent: () => import('./pages/admin/parametres/parametres').then(m => m.AdminParametres) },
+    ]
+  },
 
   // Espace Étudiant
   {

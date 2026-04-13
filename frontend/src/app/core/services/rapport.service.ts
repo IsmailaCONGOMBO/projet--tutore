@@ -5,39 +5,68 @@ import { Observable } from 'rxjs';
 export interface Rapport {
   id: number;
   titre: string;
-  etudiant?: string;
   statut: string;
-  taux_plagiat?: number | null;
+  taux_plagiat?: number;
+  seuil_plagiat?: number;
+  note?: number;
+  commentaire?: string;
+  etudiant?: { user: { id: number, name: string } };
+  enseignant?: { user: { id: number, name: string } };
   created_at: string;
-  file_url?: string;
+  date_analyse?: string;
+  date_correction?: string;
+  date_validation_admin?: string;
+  date_validation_finale?: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class RapportService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8000/api/rapports';
+  private api = 'http://localhost:8000/api/rapports';
 
-  // Pour l'Enseignant
-  getRapportsAssignes(): Observable<Rapport[]> {
-    return this.http.get<Rapport[]>(`${this.apiUrl}/assignes`);
+  // Étudiant
+  testerRapport(formData: FormData): Observable<any> {
+    return this.http.post(`${this.api}/test`, formData);
   }
 
-  getRapportsArchives(): Observable<Rapport[]> {
-    return this.http.get<Rapport[]>(`${this.apiUrl}/archives`);
+  soumettreRapport(formData: FormData): Observable<any> {
+    return this.http.post(this.api, formData);
   }
 
-  telechargerRapport(id: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/${id}/download`, { responseType: 'blob' });
-  }
-
-  // Pour l'Étudiant
   getMes(): Observable<Rapport[]> {
-    return this.http.get<Rapport[]>(this.apiUrl);
+    return this.http.get<Rapport[]>(this.api);
   }
 
-  deposer(formData: FormData): Observable<any> {
-    return this.http.post(this.apiUrl, formData);
+  // Chef de Département
+  getListTous(): Observable<Rapport[]> {
+    return this.http.get<Rapport[]>(`${this.api}/tous`);
+  }
+
+  analyserRapport(id: number): Observable<any> {
+    return this.http.post(`${this.api}/analyse/${id}`, {});
+  }
+
+  affecterEnseignant(id: number, enseignantId: number): Observable<any> {
+    return this.http.post(`${this.api}/affecter/${id}`, { enseignant_id: enseignantId });
+  }
+
+  decisionFinale(id: number, decision: 'VALIDE_FINAL' | 'REJETE_FINAL'): Observable<any> {
+    return this.http.post(`${this.api}/decision-finale/${id}`, { decision });
+  }
+
+  // Enseignant
+  getAssignes(): Observable<Rapport[]> {
+    return this.http.get<Rapport[]>(`${this.api}/assignes`);
+  }
+
+  // Legacy Aliases for compatibility
+  getRapportsAssignes(): Observable<Rapport[]> { return this.getAssignes(); }
+  getRapportsArchives(): Observable<Rapport[]> { return this.getListTous(); }
+  getTousLesRapports(): Observable<Rapport[]> { return this.getListTous(); }
+  telechargerRapport(id: number): Observable<Blob> { return this.download(id); }
+
+  // Utils
+  download(id: number): Observable<Blob> {
+    return this.http.get(`${this.api}/${id}/download`, { responseType: 'blob' });
   }
 }

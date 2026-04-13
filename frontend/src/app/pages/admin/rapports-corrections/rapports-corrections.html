@@ -1,0 +1,102 @@
+<div class="page-container">
+  
+  <div class="page-header">
+    <div class="title-block">
+      <h1>Rapports & Corrections</h1>
+      <p>Consultation et suivi de l'ensemble des soumissions étudiantes.</p>
+    </div>
+    <div class="actions-block">
+      <button class="btn-refresh" (click)="chargerRapports()">
+        <span class="material-icons">refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <div class="search-input">
+      <span class="material-icons">search</span>
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher un étudiant ou un titre...">
+    </div>
+    <div class="filter-select">
+      <span class="material-icons">filter_list</span>
+      <select [(ngModel)]="filterStatut">
+        <option value="TOUS">Tous les statuts</option>
+        <option value="EN_ATTENTE">En attente</option>
+        <option value="ANALYSE">En cours d'analyse</option>
+        <option value="NOTE">Noté</option>
+        <option value="ARCHIVE">Archivé</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des rapports...</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Rapport</th>
+              <th>Étudiant & Filière</th>
+              <th>Date</th>
+              <th>Plagiat</th>
+              <th>Statut</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of filteredRapports(); track r.id) {
+              <tr>
+                <td>
+                  <div class="rapport-info">
+                    <span class="rapport-title">{{ r.titre }}</span>
+                    <span class="rapport-enseignant">Assigné à : {{ r.enseignant }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="etudiant-info">
+                    <span class="etudiant-name">{{ r.etudiant }}</span>
+                    <span class="filiere-tag">{{ r.filiere }}</span>
+                  </div>
+                </td>
+                <td class="td-date">{{ r.date_depot }}</td>
+                <td>
+                  <div class="plagiat-wrapper">
+                    <span class="plagiat-value" [style.color]="getPlagiatColor(r.taux_plagiat)">
+                      {{ r.taux_plagiat }}%
+                    </span>
+                    <div class="mini-progress">
+                      <div class="mini-fill" [style.width.%]="r.taux_plagiat" [style.background-color]="getPlagiatColor(r.taux_plagiat)"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="getStatutClass(r.statut)">
+                    {{ r.statut.replace('_', ' ') }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  <a [href]="r.file_url" target="_blank" class="action-icon" title="Télécharger">
+                    <span class="material-icons">download</span>
+                  </a>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="empty-table">
+                  <span class="material-icons">folder_open</span>
+                  <p>Aucun rapport ne correspond à votre recherche.</p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+</div>

@@ -1,0 +1,157 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Configuration Système</h1>
+    <p class="page-subtitle">Gérer les paramètres globaux de la plateforme</p>
+  </div>
+
+  <!-- Success Message -->
+  @if (success()) {
+    <div class="alert alert-success">
+      <span class="alert-icon">alert</span>
+      <span>{{ success() }}</span>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (error()) {
+    <div class="alert alert-error">
+      <span class="alert-icon">alert</span>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <div class="settings-grid">
+    <!-- Paramètres de détection -->
+    <div class="settings-card">
+      <h2 class="card-title">Détection de Plagiat</h2>
+      <div class="form-group">
+        <label for="seuil-plagiat" class="form-label">
+          Seuil de détection (%) : {{ settings().seuil_plagiat }}%
+        </label>
+        <input 
+          type="range"
+          id="seuil-plagiat"
+          class="form-range"
+          [(ngModel)]="settings().seuil_plagiat"
+          min="0"
+          max="100"
+          step="5">
+        <div class="range-labels">
+          <span>0%</span>
+          <span>50%</span>
+          <span>100%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Périodes académiques -->
+    <div class="settings-card">
+      <h2 class="card-title">Périodes Académiques</h2>
+      <div class="form-group">
+        <label for="periode-themes" class="form-label">Période de soumission des thèmes</label>
+        <input 
+          type="date"
+          id="periode-themes"
+          class="form-control"
+          [(ngModel)]="settings().periite_soumission_themes"
+          name="periite_themes">
+      </div>
+      <div class="form-group">
+        <label for="periode-rapports" class="form-label">Période de dépôt des rapports</label>
+        <input 
+          type="date"
+          id="periode-rapports"
+          class="form-control"
+          [(ngModel)]="settings().periite_depot_rapports"
+          name="periite_depot_rapports">
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="settings-card">
+      <h2 class="card-title">Notifications</h2>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input 
+            type="checkbox"
+            [(ngModel)]="settings().notification_auto"
+            name="notification_auto">
+          <span class="checkbox-text">Activer les notifications automatiques</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Maintenance -->
+    <div class="settings-card">
+      <h2 class="card-title">Maintenance</h2>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input 
+            type="checkbox"
+            [(ngModel)]="settings().maintenance_mode"
+            name="maintenance_mode">
+          <span class="checkbox-text">Mode maintenance</span>
+        </label>
+        <small class="form-help">Activez cette option pour mettre le système en maintenance</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gestion des filières -->
+  <div class="filieres-section">
+    <h2 class="section-title">Gestion des Filières</h2>
+    
+    <div class="filiere-add">
+      <div class="input-group">
+        <input 
+          type="text"
+          class="form-control"
+          [ngModel]="nouvelleFiliere()"
+          (ngModelChange)="nouvelleFiliere.set($event)"
+          placeholder="Nom de la nouvelle filière..."
+          (keyup.enter)="ajouterFiliere()">
+        <button class="btn btn-primary" (click)="ajouterFiliere()" [disabled]="!nouvelleFiliere().trim()">
+          <span class="btn-icon">add</span>
+          Ajouter
+        </button>
+      </div>
+    </div>
+
+    <div class="filieres-list">
+      @for (filiere of filieres(); track filiere.id) {
+        <div class="filiere-item" [class.inactive]="!filiere.active">
+          <div class="filiere-info">
+            <span class="filiere-name">{{ filiere.nom }}</span>
+            <span class="filiere-status">{{ filiere.active ? 'Active' : 'Inactive' }}</span>
+          </div>
+          <div class="filiere-actions">
+            <button 
+              class="btn btn-sm" 
+              [class.btn-success]="filiere.active"
+              [class.btn-warning]="!filiere.active"
+              (click)="toggleFiliere(filiere.id)">
+              {{ filiere.active ? 'Désactiver' : 'Activer' }}
+            </button>
+            <button 
+              class="btn btn-sm btn-danger"
+              (click)="supprimerFiliere(filiere.id)">
+              Supprimer
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions-section">
+    <button 
+      class="btn btn-primary btn-lg"
+      (click)="sauvegarderParametres()"
+      [disabled]="loading()">
+      <span class="btn-icon" *ngIf="loading()">loading</span>
+      <span class="btn-icon" *ngIf="!loading()">save</span>
+      {{ loading() ? 'Sauvegarde en cours...' : 'Sauvegarder les paramètres' }}
+    </button>
+  </div>
+</div>

@@ -1,48 +1,59 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { SlicePipe } from '@angular/common';
-import { RapportChefService, RapportChef } from '../../../core/services/rapport-chef.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RapportService, Rapport } from '../../../core/services/rapport.service';
+import { UserService } from '../../../core/services/user.service';
 
 @Component({
   selector: 'app-chef-rapports',
-  imports: [RouterLink, SlicePipe],
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './rapports.html',
   styleUrl: './rapports.css'
 })
 export class ChefRapports implements OnInit {
-  private svc = inject(RapportChefService);
+  private rapportSvc = inject(RapportService);
+  private userSvc = inject(UserService);
 
-  rapports = signal<RapportChef[]>([]);
-  loading  = signal(true);
-  error    = signal('');
-  filtre   = signal<'TOUS' | 'EN_ATTENTE' | 'ACCEPTE' | 'REJETE'>('TOUS');
+  rapports = signal<Rapport[]>([]);
+  enseignants = signal<any[]>([]);
+  loading = signal(true);
+  
+  selectedRapport = signal<Rapport | null>(null);
+  selectedEnseignantId = 0;
 
   ngOnInit() {
-    this.svc.getTous().subscribe({
-      next: (r) => { this.rapports.set(r); this.loading.set(false); },
-      error: ()  => { this.error.set('Erreur lors du chargement des rapports.'); this.loading.set(false); }
+    this.chargerDonnees();
+  }
+
+  chargerDonnees() {
+    this.loading.set(true);
+    this.rapportSvc.getListTous().subscribe(data => {
+      this.rapports.set(data);
+      this.loading.set(false);
+    });
+    this.userSvc.getEnseignants().subscribe(data => this.enseignants.set(data));
+  }
+
+  analyser(id: number) {
+    this.rapportSvc.analyserRapport(id).subscribe(() => this.chargerDonnees());
+  }
+
+  affecter() {
+    const r = this.selectedRapport();
+    if (!r || !this.selectedEnseignantId) return;
+    this.rapportSvc.affecterEnseignant(r.id, this.selectedEnseignantId).subscribe(() => {
+      this.chargerDonnees();
+      this.selectedRapport.set(null);
     });
   }
 
-  get rapportsFiltres(): RapportChef[] {
-    const f = this.filtre();
-    if (f === 'TOUS') return this.rapports();
-    return this.rapports().filter(r => r.statut === f);
+  decisionFinale(id: number, decision: 'VALIDE_FINAL' | 'REJETE_FINAL') {
+    this.rapportSvc.decisionFinale(id, decision).subscribe(() => this.chargerDonnees());
   }
 
-  countStatut(s: string) { return this.rapports().filter(r => r.statut === s).length; }
-
-  tauxColor(taux: number | null): string {
-    if (taux === null) return 'var(--text-light)';
-    if (taux < 20) return '#16a34a';
-    if (taux < 40) return '#d97706';
-    return '#dc2626';
-  }
-
-  tauxBg(taux: number | null): string {
-    if (taux === null) return 'var(--off-white-2)';
-    if (taux < 20) return '#16a34a';
-    if (taux < 40) return '#d97706';
-    return '#dc2626';
+  selectRapport(r: Rapport) {
+    this.selectedRapport.set(r);
+    this.selectedEnseignantId = r.enseignant?.user?.id || 0;
   }
 }

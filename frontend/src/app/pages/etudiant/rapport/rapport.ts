@@ -1,69 +1,104 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RapportService } from '../../../core/services/rapport.service';
+import { RapportService, Rapport } from '../../../core/services/rapport.service';
+import { ThemeService, Theme } from '../../../core/services/theme.service';
 
 @Component({
-  selector: 'app-rapport',
-  imports: [FormsModule],
+  selector: 'app-etudiant-rapport',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './rapport.html',
   styleUrl: './rapport.css'
 })
-export class EtudiantRapport {
-  private svc = inject(RapportService);
+export class EtudiantRapport implements OnInit {
+  private rapportSvc = inject(RapportService);
+  private themeSvc = inject(ThemeService);
 
-  fichier: File | null = null;
-  titre    = '';
-  loading  = signal(false);
-  success  = signal('');
-  error    = signal('');
-  dragOver = signal(false);
+  rapports = signal<Rapport[]>([]);
+  themes = signal<Theme[]>([]);
+  loading = signal(false);
+  
+  // Formulaire Soumission
+  selectedThemeId = 0;
+  selectedFile: File | null = null;
+  titre = '';
 
-  onFileChange(e: Event) {
-    const input = e.target as HTMLInputElement;
-    if (input.files?.[0]) this.setFile(input.files[0]);
+  // Mode Test (Volatile)
+  testFile: File | null = null;
+  testResult = signal<{ taux: number; status: string } | null>(null);
+  testing = signal(false);
+
+  message = signal<{ type: 'success' | 'error', text: string } | null>(null);
+
+  ngOnInit() {
+    this.chargerDonnees();
   }
 
-  onDrop(e: DragEvent) {
-    e.preventDefault();
-    this.dragOver.set(false);
-    const f = e.dataTransfer?.files[0];
-    if (f && f.type === 'application/pdf') this.setFile(f);
-    else this.error.set('Seuls les fichiers PDF sont acceptés.');
-  }
-
-  private setFile(f: File) {
-    if (f.type !== 'application/pdf') { this.error.set('Seuls les fichiers PDF sont acceptés.'); return; }
-    if (f.size > 20 * 1024 * 1024)   { this.error.set('Fichier trop volumineux (max 20 Mo).'); return; }
-    this.fichier = f;
-    this.error.set('');
-  }
-
-  get fileSize(): string {
-    if (!this.fichier) return '';
-    const kb = this.fichier.size / 1024;
-    return kb > 1024 ? `${(kb/1024).toFixed(1)} Mo` : `${kb.toFixed(0)} Ko`;
-  }
-
-  submit() {
-    if (!this.fichier) { this.error.set('Veuillez sélectionner un fichier PDF.'); return; }
+  chargerDonnees() {
     this.loading.set(true);
-    this.error.set('');
-    const form = new FormData();
-    form.append('fichier', this.fichier);
-    if (this.titre) form.append('titre', this.titre);
+    this.rapportSvc.getMes().subscribe(data => this.rapports.set(data));
+    this.themeSvc.getMes().subscribe(data => {
+      // Uniquement les thèmes validés définitivement peuvent accueillir un rapport
+      this.themes.set(data.filter(t => t.statut === 'VALIDE_ADMIN'));
+      this.loading.set(false);
+    });
+  }
 
-    this.svc.deposer(form).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.success.set('Rapport déposé avec succès ! Il sera analysé sous peu.');
-        this.fichier = null;
-        this.titre = '';
-        setTimeout(() => this.success.set(''), 5000);
+  onFileSelected(event: any, isTest: boolean = false) {
+    const file = event.target.files[0];
+    if (isTest) this.testFile = file;
+    else this.selectedFile = file;
+  }
+
+  lancerTest() {
+    if (!this.testFile) return;
+    this.testing.set(true);
+    this.testResult.set(null);
+
+    const fd = new FormData();
+    fd.append('fichier', this.testFile);
+
+    this.rapportSvc.testerRapport(fd).subscribe({
+      next: (res) => {
+        this.testResult.set({ taux: res.taux_plagiat, status: res.statut_previsionnel });
+        this.testing.set(false);
       },
-      error: (e: any) => {
+      error: () => this.testing.set(false)
+    });
+  }
+
+  soumettre() {
+    if (!this.selectedFile || !this.titre) return;
+    this.loading.set(true);
+
+    const fd = new FormData();
+    fd.append('fichier', this.selectedFile);
+    fd.append('titre', this.titre);
+    if (this.selectedThemeId) fd.append('theme_id', this.selectedThemeId.toString());
+
+    this.rapportSvc.soumettreRapport(fd).subscribe({
+      next: () => {
+        this.message.set({ type: 'success', text: 'Rapport soumis officiellement !' });
+        this.chargerDonnees();
+        this.resetForm();
+      },
+      error: (e) => {
+        this.message.set({ type: 'error', text: e.error?.message || 'Erreur lors du dépôt.' });
         this.loading.set(false);
-        this.error.set(e.error?.message || 'Erreur lors du dépôt.');
       }
     });
+  }
+
+  resetForm() {
+    this.selectedFile = null;
+    this.titre = '';
+    this.selectedThemeId = 0;
+  }
+
+  getStatusClass(s: string): string {
+    if (s.includes('VALIDE')) return 'status-success';
+    if (s.includes('REJETE')) return 'status-danger';
+    return 'status-warning';
   }
 }

@@ -10,11 +10,13 @@ class Theme extends Model
 {
     protected $fillable = [
         'etudiant_id', 'titre', 'description', 'statut',
-        'motif_rejet', 'valide_par', 'valide_le'
+        'motif_rejet', 'valide_par_chef', 'valide_par_admin', 
+        'date_validation_chef', 'date_validation_admin'
     ];
 
     protected $casts = [
-        'valide_le' => 'datetime',
+        'date_validation_chef' => 'datetime',
+        'date_validation_admin' => 'datetime',
     ];
 
     public function etudiant(): BelongsTo
@@ -22,9 +24,14 @@ class Theme extends Model
         return $this->belongsTo(Etudiant::class);
     }
 
-    public function validePar(): BelongsTo
+    public function chef(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'valide_par');
+        return $this->belongsTo(User::class, 'valide_par_chef');
+    }
+
+    public function admin(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'valide_par_admin');
     }
 
     public function rapport(): HasOne

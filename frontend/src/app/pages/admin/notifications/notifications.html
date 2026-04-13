@@ -1,0 +1,148 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Notifications</h1>
+    <p class="page-subtitle">Envoyer des notifications aux utilisateurs du système</p>
+  </div>
+
+  <!-- Success Message -->
+  @if (success()) {
+    <div class="alert alert-success">
+      <span class="alert-icon">alert</span>
+      <span>{{ success() }}</span>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (error()) {
+    <div class="alert alert-error">
+      <span class="alert-icon">alert</span>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <div class="notification-form-container">
+    <form class="notification-form" (ngSubmit)="envoyerNotification()">
+      <!-- Type de notification -->
+      <div class="form-section">
+        <h3 class="section-title">Type de notification</h3>
+        <div class="radio-group">
+          @for (type of typesNotifications; track type.value) {
+            <label class="radio-item">
+              <input 
+                type="radio" 
+                name="type" 
+                [value]="type.value"
+                [(ngModel)]="notificationForm().type"
+                (change)="onTypeChange(type.value)">
+              <span class="radio-icon">{{ type.icon }}</span>
+              <span class="radio-label">{{ type.label }}</span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <!-- Cible de la notification -->
+      <div class="form-section">
+        <h3 class="section-title">Destinataires</h3>
+        <div class="radio-group">
+          @for (cible of cibles; track cible.value) {
+            <label class="radio-item">
+              <input 
+                type="radio" 
+                name="cible" 
+                [value]="cible.value"
+                [(ngModel)]="notificationForm().cible">
+              <span class="radio-icon">{{ cible.icon }}</span>
+              <span class="radio-label">{{ cible.label }}</span>
+            </label>
+          }
+        </div>
+        
+        <!-- Sélection de filière si cible = filiere -->
+        @if (notificationForm().cible === 'filiere') {
+          <div class="form-group">
+            <label for="filiere" class="form-label">Sélectionner une filière *</label>
+            <select 
+              id="filiere"
+              class="form-control"
+              [(ngModel)]="notificationForm().filiere_id"
+              name="filiere_id">
+              <option value="">-- Choisir une filière --</option>
+              @for (filiere of filieres; track filiere.id) {
+                <option [value]="filiere.id">{{ filiere.nom }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+
+      <!-- Contenu de la notification -->
+      <div class="form-section">
+        <h3 class="section-title">Contenu du message</h3>
+        
+        <div class="form-group">
+          <label for="titre" class="form-label">Titre *</label>
+          <input 
+            type="text"
+            id="titre"
+            class="form-control"
+            [(ngModel)]="notificationForm().titre"
+            name="titre"
+            placeholder="Titre de la notification"
+            required>
+        </div>
+        
+        <div class="form-group">
+          <label for="message" class="form-label">Message *</label>
+          <textarea 
+            id="message"
+            class="form-control"
+            [(ngModel)]="notificationForm().message"
+            name="message"
+            placeholder="Contenu du message..."
+            rows="6"
+            required>
+          </textarea>
+          <div class="char-count">
+            {{ notificationForm().message.length || 0 }} caractères
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button 
+          type="button" 
+          class="btn btn-secondary"
+          (click)="notificationForm.set({titre: '', message: '', type: 'personnalise', cible: 'tous', filiere_id: undefined})">
+          <span class="btn-icon">refresh</span>
+          Réinitialiser
+        </button>
+        
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="loading()">
+          <span class="btn-icon" *ngIf="loading()">loading</span>
+          <span class="btn-icon" *ngIf="!loading()">send</span>
+          {{ loading() ? 'Envoi en cours...' : 'Envoyer la notification' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Aperçu de la notification -->
+  @if (notificationForm().titre || notificationForm().message) {
+    <div class="preview-container">
+      <h3 class="preview-title">Aperçu de la notification</h3>
+      <div class="preview-card">
+        <div class="preview-header">
+          <span class="preview-badge">{{ getTypeLabel() }}</span>
+          <span class="preview-cible">{{ getCibleLabel() }}</span>
+        </div>
+        <h4 class="preview-subject">{{ notificationForm().titre || 'Titre non défini' }}</h4>
+        <p class="preview-message">{{ notificationForm().message || 'Message non défini' }}</p>
+      </div>
+    </div>
+  }
+</div>

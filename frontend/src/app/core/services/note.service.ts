@@ -12,20 +12,33 @@ export interface Note {
   created_at?: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class NoteService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8000/api/notes';
+  private api = 'http://localhost:8000/api/rapports';
 
-  // Pour l'Enseignant
-  ajouterNote(data: { rapport_id: number; note: number; commentaire: string }): Observable<any> {
-    return this.http.post(this.apiUrl, data);
+  soumettreNote(rapportId: number, note: number, commentaire: string): Observable<any> {
+    return this.http.post(`${this.api}/note/${rapportId}`, { note, commentaire });
   }
 
-  // Pour l'Étudiant
-  getMaNote(): Observable<Note> {
-    return this.http.get<Note>(`${this.apiUrl}/ma-note`);
+  validerAdmin(rapportId: number): Observable<any> {
+    return this.http.post(`${this.api}/valider-admin/${rapportId}`, {});
+  }
+
+  rejeterAdmin(rapportId: number): Observable<any> {
+    return this.http.post(`${this.api}/rejeter-admin/${rapportId}`, {});
+  }
+
+  getMaNote(): Observable<any> {
+    // Legacy support for student view
+    return this.http.get(`http://localhost:8000/api/notes/ma-note`);
+  }
+
+  ajouterNote(data: any): Observable<any> {
+    return this.http.post(`${this.api}/note/${data.rapport_id}`, data);
+  }
+
+  getNotesEnAttente(): Observable<any[]> {
+    return this.http.get<any[]>('http://localhost:8000/api/notes/en-attente');
   }
 }

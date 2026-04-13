@@ -1,30 +1,62 @@
-@import '../chef-shared.css';
-
-.filter-tab.active-attente { background: #92400e; color: white; border-color: #92400e; }
-
-/* Taux inline */
-.taux-inline { display: flex; flex-direction: column; gap: 0.3rem; min-width: 90px; }
-.taux-pct    { font-size: 0.9rem; font-weight: 700; }
-.taux-bar-track {
-  height: 5px; background: var(--off-white-2);
-  border-radius: 100px; overflow: hidden;
+.chef-rapports {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  height: calc(100vh - 100px);
 }
-.taux-bar-fill { height: 100%; border-radius: 100px; transition: width 0.6s ease; }
-.taux-na { font-size: 0.78rem; color: var(--text-light); font-style: italic; }
 
-/* Badges rapport */
-.badge-rapport-EN_ATTENTE { background: #fef3c7; color: #92400e; }
-.badge-rapport-ACCEPTE    { background: #dcfce7; color: #166534; }
-.badge-rapport-REJETE     { background: #fee2e2; color: #991b1b; }
+.header h1 { font-size: 1.8rem; font-weight: 800; color: #1e293b; margin-bottom: 0.25rem; }
+.header p { color: #64748b; font-weight: 500; }
 
-/* Bouton analyser */
-.btn-analyser {
-  display: inline-flex; align-items: center; gap: 0.3rem;
-  padding: 0.38rem 0.9rem;
-  background: var(--blue-50); color: var(--blue-800);
-  border: 1px solid var(--blue-100); border-radius: 6px;
-  font-size: 0.8rem; font-weight: 600; text-decoration: none;
-  transition: background 0.15s, transform 0.15s;
-  white-space: nowrap;
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 2rem;
+  flex: 1;
+  min-height: 0;
 }
-.btn-analyser:hover { background: var(--blue-100); transform: translateY(-1px); }
+
+.list-section { overflow-y: auto; }
+
+.table-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.modern-table { width: 100%; border-collapse: collapse; }
+.modern-table th { text-align: left; padding: 1.25rem; background: #f8fafc; color: #64748b; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+.modern-table td { padding: 1.25rem; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+.modern-table tr.selected { background: #f0f9ff; }
+.modern-table tr:hover:not(.selected) { background: #f8fafc; }
+
+.bold { font-weight: 700; color: #1e293b; }
+.badge { padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+.status-en_attente_analyse_chef { background: #fffbe6; color: #d48806; }
+.status-valide_plagiat { background: #e6f7ff; color: #1890ff; }
+.status-assigne_enseignant { background: #f9f0ff; color: #722ed1; }
+.status-note_soumise { background: #f6ffed; color: #52c41a; }
+.status-valide_final { background: #f6ffed; color: #52c41a; border: 2px solid #b7eb8f; }
+
+/* Control Panel */
+.control-panel { background: white; border-radius: 20px; border: 1px solid #e2e8f0; padding: 2rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+.titre-select { font-size: 1.1rem; font-weight: 800; color: #4f46e5; margin: 1rem 0 2rem; }
+
+.action-steps { display: flex; flex-direction: column; gap: 2.5rem; }
+.step { display: flex; flex-direction: column; gap: 1rem; position: relative; }
+.step.disabled { opacity: 0.4; pointer-events: none; }
+.step-label { font-size: 0.85rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.btn-action { background: #4f46e5; color: white; border: none; padding: 0.75rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
+.btn-action.secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+.status-box.done { background: #f0fdf4; color: #166534; padding: 0.75rem; border-radius: 10px; font-weight: 600; font-size: 0.9rem; border: 1px solid #bbf7d0; text-align: center; }
+
+.btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn-validate { background: #10b981; color: white; border: none; padding: 0.75rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
+.btn-reject { background: #ef4444; color: white; border: none; padding: 0.75rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
+
+.wait-note { font-size: 0.85rem; color: #94a3b8; font-style: italic; }
+.select-hint { display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8; font-weight: 500; font-style: italic; }

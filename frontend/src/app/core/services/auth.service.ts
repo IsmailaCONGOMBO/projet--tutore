@@ -53,7 +53,8 @@ export class AuthService {
       case 'etudiant':         this.router.navigate(['/etudiant/dashboard']);    break;
       case 'chef_departement': this.router.navigate(['/chef/dashboard']);        break;
       case 'enseignant':       this.router.navigate(['/enseignant/dashboard']); break;
-      default:                 this.router.navigate(['/dashboard']);             break;
+      case 'admin':            this.router.navigate(['/admin/dashboard']);      break;
+      default:                 this.router.navigate(['/admin/dashboard']);      break;
     }
   }
 }

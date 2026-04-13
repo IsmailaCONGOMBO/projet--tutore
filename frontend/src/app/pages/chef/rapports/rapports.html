@@ -1,89 +1,103 @@
-<div class="page">
-  <div class="page-header">
-    <div>
-      <h1>Rapports déposés</h1>
-      <p>{{ rapportsFiltres.length }} rapport(s) affiché(s)</p>
-    </div>
+<div class="chef-rapports">
+  <div class="header">
+    <h1>Analyse & Affectation des Rapports</h1>
+    <p>Gérez le cycle de vie des rapports étudiants du département.</p>
   </div>
 
-  <!-- Filtres -->
-  <div class="filter-tabs">
-    <button class="filter-tab" [class.active-all]="filtre() === 'TOUS'" (click)="filtre.set('TOUS')">
-      Tous ({{ rapports().length }})
-    </button>
-    <button class="filter-tab" [class.active-attente]="filtre() === 'EN_ATTENTE'" (click)="filtre.set('EN_ATTENTE')">
-      ⏳ En attente ({{ countStatut('EN_ATTENTE') }})
-    </button>
-    <button class="filter-tab" [class.active-valide]="filtre() === 'ACCEPTE'" (click)="filtre.set('ACCEPTE')">
-      ✅ Acceptés ({{ countStatut('ACCEPTE') }})
-    </button>
-    <button class="filter-tab" [class.active-rejete]="filtre() === 'REJETE'" (click)="filtre.set('REJETE')">
-      ❌ Rejetés ({{ countStatut('REJETE') }})
-    </button>
-  </div>
-
-  <div class="table-card">
-    @if (rapportsFiltres.length === 0) {
-      <div class="empty-state">
-        <span>📄</span>
-        <p>Aucun rapport dans cette catégorie.</p>
-      </div>
-    } @else {
-      <table>
-        <thead>
-          <tr>
-            <th>Rapport</th>
-            <th>Étudiant</th>
-            <th>Taux plagiat</th>
-            <th>Statut</th>
-            <th>Date dépôt</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (r of rapportsFiltres; track r.id) {
+  <div class="main-layout">
+    <!-- Liste des rapports -->
+    <div class="list-section">
+      <div class="table-card">
+        <table class="modern-table">
+          <thead>
             <tr>
-              <td>
-                <div class="td-main">{{ r.titre }}</div>
-              </td>
-              <td>
-                <div class="etudiant-cell">
-                  <span class="etudiant-name">{{ r.etudiant.name }}</span>
-                  <span class="etudiant-email">{{ r.etudiant.email }}</span>
-                </div>
-              </td>
-              <td>
-                @if (r.taux_plagiat !== null) {
-                  <div class="taux-inline">
-                    <span class="taux-pct" [style.color]="tauxColor(r.taux_plagiat)">
-                      {{ r.taux_plagiat }}%
-                    </span>
-                    <div class="taux-bar-track">
-                      <div class="taux-bar-fill"
-                        [style.width.%]="r.taux_plagiat"
-                        [style.background]="tauxBg(r.taux_plagiat)">
-                      </div>
-                    </div>
-                  </div>
-                } @else {
-                  <span class="taux-na">Non analysé</span>
-                }
-              </td>
-              <td>
-                <span class="badge badge-rapport-{{ r.statut }}">
-                  {{ r.statut === 'EN_ATTENTE' ? 'En attente' : r.statut === 'ACCEPTE' ? 'Accepté' : 'Rejeté' }}
-                </span>
-              </td>
-              <td class="td-date">{{ r.created_at | slice:0:10 }}</td>
-              <td>
-                <a [routerLink]="['/chef/plagiat', r.id]" class="btn-analyser">
-                  🔍 {{ r.taux_plagiat != null ? 'Voir analyse' : 'Analyser' }}
-                </a>
-              </td>
+              <th>Rapport</th>
+              <th>Étudiant</th>
+              <th>Plagiat</th>
+              <th>Note/20</th>
+              <th>Statut</th>
+              <th>Action</th>
             </tr>
-          }
-        </tbody>
-      </table>
-    }
+          </thead>
+          <tbody>
+            @for (r of rapports(); track r.id) {
+              <tr [class.selected]="selectedRapport()?.id === r.id" (click)="selectRapport(r)">
+                <td>{{ r.titre }}</td>
+                <td>{{ r.etudiant?.user?.name }}</td>
+                <td>
+                  @if (r.taux_plagiat !== null && r.taux_plagiat !== undefined) {
+                    <span [class.text-danger]="r.taux_plagiat > 20">{{ r.taux_plagiat }}%</span>
+                  } @else { -- }
+                </td>
+                <td>{{ r.note || '--' }}</td>
+                <td>
+                  <span [class]="'badge status-' + r.statut.toLowerCase()">
+                    {{ r.statut.replace('_', ' ') }}
+                  </span>
+                </td>
+                <td>
+                  <span class="material-icons">chevron_right</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Panneau de détails & contrôle -->
+    <div class="control-panel">
+      @if (selectedRapport(); as r) {
+        <div class="control-card">
+          <h3>Contrôle du Rapport</h3>
+          <p class="titre-select">{{ r.titre }}</p>
+
+          <div class="action-steps">
+            <!-- Phase 1: Analyse -->
+            <div class="step">
+              <span class="step-label">1. Analyse de Plagiat</span>
+              @if (r.statut === 'EN_ATTENTE_ANALYSE_CHEF') {
+                <button class="btn-action" (click)="analyser(r.id)">Lancer l'Analyse</button>
+              } @else {
+                <div class="status-box done">
+                  Analysé (Taux: {{ r.taux_plagiat }}%)
+                </div>
+              }
+            </div>
+
+            <!-- Phase 2: Affectation -->
+            <div class="step" [class.disabled]="r.statut !== 'VALIDE_PLAGIAT' && r.statut !== 'ASSIGNE_ENSEIGNANT'">
+              <span class="step-label">2. Affectation Enseignant</span>
+              <select [(ngModel)]="selectedEnseignantId">
+                <option [value]="0">-- Choisir un enseignant --</option>
+                @for (e of enseignants(); track e.id) {
+                  <option [value]="e.id">{{ e.name }}</option>
+                }
+              </select>
+              <button class="btn-action secondary" (click)="affecter()" [disabled]="!selectedEnseignantId">
+                Affecter
+              </button>
+            </div>
+
+            <!-- Phase 3: Décision finale -->
+            <div class="step" [class.disabled]="r.statut !== 'NOTE_VALIDEE_ADMIN'">
+              <span class="step-label">3. Décision Finale</span>
+              @if (r.statut === 'NOTE_VALIDEE_ADMIN') {
+                <div class="btn-group">
+                  <button class="btn-validate" (click)="decisionFinale(r.id, 'VALIDE_FINAL')">Valider Projet</button>
+                  <button class="btn-reject" (click)="decisionFinale(r.id, 'REJETE_FINAL')">Rejeter Projet</button>
+                </div>
+              } @else if (r.statut === 'VALIDE_FINAL' || r.statut === 'REJETE_FINAL') {
+                <div class="status-box done">Action terminée : {{ r.statut }}</div>
+              } @else {
+                <p class="wait-note">Note non encore validée par l'Admin.</p>
+              }
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="select-hint">Cliquez sur un rapport pour voir les options de validation.</div>
+      }
+    </div>
   </div>
 </div>

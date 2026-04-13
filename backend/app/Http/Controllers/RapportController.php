@@ -5,153 +5,238 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Rapport;
 use App\Models\Enseignant;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class RapportController extends Controller
 {
-    // Pour l'Enseignant : rapports assignés à lui par le chef de département
-    public function assignes(Request $request)
+    /**
+     * TEST VOLATILE (Étudiant)
+     * Aucun enregistrement en base.
+     */
+    public function testerRapport(Request $request)
     {
-        $user = $request->user();
-        if (!$user->enseignant) {
-            return response()->json([], 200); // Pas un enseignant
-        }
+        $request->validate(['fichier' => 'required|file|mimes:pdf|max:20480']);
+        
+        // Simulation d'une analyse (sera remplacé par l'algorithme choisi)
+        $taux = rand(5, 45); 
 
-        $rapports = Rapport::where('enseignant_id', $user->enseignant->id)
-            ->where('archive', false)
-            ->with(['etudiant.user', 'analyse']) // Ajout de 'analyse'
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Formater les données pour le frontend
-        $result = $rapports->map(function ($r) {
-            return [
-                'id' => $r->id,
-                'titre' => $r->titre,
-                'etudiant' => $r->etudiant->user->name,
-                'date_depot' => $r->created_at->format('Y-m-d'),
-                'statut' => $r->statut,
-                'taux_plagiat' => $r->analyse ? $r->analyse->taux_plagiat : null,
-                'file_url' => asset('storage/' . $r->fichier_path)
-            ];
-        });
-
-        return response()->json($result);
+        return response()->json([
+            'message' => 'Analyse de test terminée.',
+            'taux_plagiat' => $taux,
+            'statut_previsionnel' => $taux > 20 ? 'REJETE_PLAGIAT' : 'VALIDABLE',
+            'seuil' => 20
+        ]);
     }
 
-    // Pour l'Enseignant : rapports archivés
-    public function archives(Request $request)
-    {
-        $user = $request->user();
-        if (!$user->enseignant) {
-            return response()->json([], 200);
-        }
-
-        $rapports = Rapport::where('enseignant_id', $user->enseignant->id)
-            ->where('archive', true)
-            ->with('etudiant.user')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $result = $rapports->map(function ($r) {
-            return [
-                'id' => $r->id,
-                'titre' => $r->titre,
-                'etudiant' => $r->etudiant->user->name,
-                'date_depot' => $r->created_at->format('Y-m-d'),
-                'statut' => $r->statut,
-                'file_url' => asset('storage/' . $r->fichier_path)
-            ];
-        });
-
-        return response()->json($result);
-    }
-
-    // Pour l'Enseignant : télécharger un rapport PDF
-    public function download(Request $request, $id)
-    {
-        // On vérifie que l'enseignant a bien le droit sur ce rapport
-        $user = $request->user();
-        $rapport = Rapport::findOrFail($id);
-
-        if ($user->enseignant && $rapport->enseignant_id !== $user->enseignant->id) {
-            return response()->json(['message' => 'Non autorisé.'], 403);
-        }
-
-        if (!Storage::disk('public')->exists($rapport->fichier_path)) {
-            return response()->json(['message' => 'Fichier introuvable sur le serveur.'], 404);
-        }
-
-        return Storage::disk('public')->download($rapport->fichier_path, $rapport->fichier_nom_original);
-    }
-
-    // Pour l'Étudiant : consulter ses propres rapports
-    public function index(Request $request)
-    {
-        $user = $request->user();
-        if (!$user->etudiant) {
-            return response()->json([], 200);
-        }
-
-        $rapports = Rapport::where('etudiant_id', $user->etudiant->id)
-            ->with('analyse')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $result = $rapports->map(function ($r) {
-            return [
-                'id' => $r->id,
-                'titre' => $r->titre,
-                'statut' => $r->statut,
-                'taux_plagiat' => $r->analyse ? $r->analyse->taux_plagiat : null,
-                'created_at' => $r->created_at->format('Y-m-d H:i:s'),
-                'file_url' => asset('storage/' . $r->fichier_path)
-            ];
-        });
-
-        return response()->json($result);
-    }
-
-    // Pour l'Étudiant : déposer un rapport PDF
+    /**
+     * SOUMISSION OFFICIELLE (Étudiant)
+     */
     public function store(Request $request)
     {
         $user = $request->user();
         if (!$user->etudiant) {
-            return response()->json(['message' => 'Accès refusé. Profil étudiant introuvable.'], 403);
+            return response()->json(['message' => 'Profil étudiant requis.'], 403);
         }
 
         $request->validate([
-            'fichier' => 'required|file|mimes:pdf|max:20480', // Max 20Mo
-            'titre' => 'nullable|string|max:255'
+            'fichier' => 'required|file|mimes:pdf|max:20480',
+            'titre' => 'required|string|max:255',
+            'theme_id' => 'nullable|exists:themes,id'
         ]);
 
         $file = $request->file('fichier');
-        $originalName = $file->getClientOriginalName();
-        $size = $file->getSize();
-
-        // Sauvegarde dans storage/app/public/rapports
         $path = $file->store('rapports', 'public');
-
-        // MOCK TEMPORAIRE : assigner au premier enseignant trouvé (s'il y en a un)
-        $enseignant = Enseignant::first();
 
         $rapport = Rapport::create([
             'etudiant_id' => $user->etudiant->id,
-            'enseignant_id' => $enseignant ? $enseignant->id : null,
-            'titre' => $request->titre ?: 'Rapport de ' . $user->name,
+            'theme_id' => $request->theme_id,
+            'titre' => $request->titre,
             'fichier_path' => $path,
-            'fichier_nom_original' => $originalName,
-            'fichier_taille' => $size,
-            'statut' => 'EN_ATTENTE',
-            'archive' => false
+            'fichier_nom_original' => $file->getClientOriginalName(),
+            'fichier_taille' => $file->getSize(),
+            'statut' => 'EN_ATTENTE_ANALYSE_CHEF',
+            'seuil_plagiat' => 20.0
         ]);
 
-        // Déclencher l'analyse de plagiat en arrière-plan
-        \App\Jobs\AnalyseRapportPlagiatJob::dispatch($rapport->id);
-
         return response()->json([
-            'message' => 'Rapport déposé avec succès. L\'analyse est en cours.',
+            'message' => 'Rapport soumis officiellement. En attente d\'analyse par le Chef.',
             'rapport' => $rapport
         ], 201);
+    }
+
+    /**
+     * ANALYSE PAR LE CHEF (Chef)
+     */
+    public function analyserParChef(Request $request, $id)
+    {
+        $rapport = Rapport::findOrFail($id);
+
+        if ($rapport->statut !== 'EN_ATTENTE_ANALYSE_CHEF') {
+            return response()->json(['message' => 'Ce rapport ne peut plus être analysé.'], 400);
+        }
+
+        // Logique de plagiat (simulation par rapport à d'autres fichiers)
+        $taux = rand(5, 40); 
+        $statut = ($taux > $rapport->seuil_plagiat) ? 'REJETE_PLAGIAT' : 'VALIDE_PLAGIAT';
+
+        $rapport->update([
+            'taux_plagiat' => $taux,
+            'statut' => $statut,
+            'date_analyse' => now()
+        ]);
+
+        // Notification
+        Notification::create([
+            'user_id' => $rapport->etudiant->user_id,
+            'titre' => 'Résultat d\'analyse de plagiat',
+            'message' => $statut === 'REJETE_PLAGIAT' 
+                ? "Votre rapport a été rejeté (Taux: $taux%)." 
+                : "Votre rapport est recevable (Taux: $taux%).",
+            'type' => 'rapport'
+        ]);
+
+        return response()->json([
+            'message' => 'Analyse effectuée.',
+            'taux' => $taux,
+            'statut' => $statut
+        ]);
+    }
+
+    /**
+     * AFFECTATION À UN ENSEIGNANT (Chef)
+     */
+    public function affecterEnseignant(Request $request, $id)
+    {
+        $request->validate(['enseignant_id' => 'required|exists:enseignants,id']);
+        
+        $rapport = Rapport::findOrFail($id);
+        if ($rapport->statut !== 'VALIDE_PLAGIAT') {
+            return response()->json(['message' => 'Le rapport doit d\'abord être validé pour plagiat.'], 400);
+        }
+
+        $rapport->update([
+            'enseignant_id' => $request->enseignant_id,
+            'statut' => 'ASSIGNE_ENSEIGNANT'
+        ]);
+
+        return response()->json(['message' => 'Enseignant affecté avec succès.']);
+    }
+
+    /**
+     * RAPPORTS ASSIGNÉS (Enseignant)
+     */
+    public function assignes(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->enseignant) return response()->json([]);
+
+        $rapports = Rapport::where('enseignant_id', $user->enseignant->id)
+            ->whereIn('statut', ['ASSIGNE_ENSEIGNANT', 'NOTE_SOUMISE'])
+            ->with('etudiant.user')
+            ->get();
+
+        return response()->json($rapports);
+    }
+
+    /**
+     * SOUMISSION NOTE (Enseignant)
+     */
+    public function soumettreNote(Request $request, $id)
+    {
+        $request->validate([
+            'note' => 'required|numeric|min:0|max:20',
+            'commentaire' => 'required|string'
+        ]);
+
+        $rapport = Rapport::findOrFail($id);
+        if ($rapport->statut !== 'ASSIGNE_ENSEIGNANT' && $rapport->statut !== 'NOTE_REJETEE_ADMIN') {
+            return response()->json(['message' => 'Action impossible à ce stade.'], 400);
+        }
+
+        $rapport->update([
+            'note' => $request->note,
+            'commentaire' => $request->commentaire,
+            'statut' => 'NOTE_SOUMISE',
+            'date_correction' => now()
+        ]);
+
+        return response()->json(['message' => 'Note soumise pour validation Admin.']);
+    }
+
+    /**
+     * VALIDATION NOTE (Admin)
+     */
+    public function validerNoteAdmin(Request $request, $id)
+    {
+        $rapport = Rapport::findOrFail($id);
+        $rapport->update([
+            'statut' => 'NOTE_VALIDEE_ADMIN',
+            'date_validation_admin' => now()
+        ]);
+        return response()->json(['message' => 'Note validée par l\'Admin.']);
+    }
+
+    /**
+     * REJET NOTE (Admin)
+     */
+    public function rejeterNoteAdmin(Request $request, $id)
+    {
+        $rapport = Rapport::findOrFail($id);
+        $rapport->update(['statut' => 'NOTE_REJETEE_ADMIN']);
+        return response()->json(['message' => 'Note rejetée. L\'enseignant doit corriger.']);
+    }
+
+    /**
+     * DÉCISION FINALE (Chef)
+     */
+    public function decisionFinaleChef(Request $request, $id)
+    {
+        $request->validate(['decision' => 'required|in:VALIDE_FINAL,REJETE_FINAL']);
+        
+        $rapport = Rapport::findOrFail($id);
+        if ($rapport->statut !== 'NOTE_VALIDEE_ADMIN') {
+            return response()->json(['message' => 'Validation Admin requise.'], 400);
+        }
+
+        $rapport->update([
+            'statut' => $request->decision,
+            'date_validation_finale' => now()
+        ]);
+
+        Notification::create([
+            'user_id' => $rapport->etudiant->user_id,
+            'titre' => 'Décision finale du rapport',
+            'message' => "La validation finale de votre rapport est : " . str_replace('_', ' ', $request->decision),
+            'type' => 'rapport'
+        ]);
+
+        return response()->json(['message' => 'Décision finale enregistrée.']);
+    }
+
+    /**
+     * UTILS
+     */
+    public function download(Request $request, $id)
+    {
+        $rapport = Rapport::findOrFail($id);
+        return Storage::disk('public')->download($rapport->fichier_path, $rapport->fichier_nom_original);
+    }
+
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->etudiant) return response()->json([]);
+        return response()->json(Rapport::where('etudiant_id', $user->etudiant->id)->orderBy('created_at', 'desc')->get());
+    }
+
+    public function tous(Request $request)
+    {
+        return response()->json(
+            Rapport::with(['etudiant.user', 'enseignant.user'])
+                ->orderBy('created_at', 'desc')
+                ->get()
+        );
     }
 }

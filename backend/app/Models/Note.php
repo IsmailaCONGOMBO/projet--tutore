@@ -9,7 +9,8 @@ class Note extends Model
 {
     protected $fillable = [
         'rapport_id', 'enseignant_id', 'valeur',
-        'commentaire', 'soumise', 'soumise_le'
+        'commentaire', 'soumise', 'soumise_le',
+        'statut_validation', 'motif_rejet'
     ];
 
     protected $casts = [

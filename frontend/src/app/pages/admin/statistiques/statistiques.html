@@ -1,0 +1,158 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Statistiques Globales</h1>
+    <p class="page-subtitle">Vue d'ensemble des performances du système</p>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement des statistiques...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error) {
+    <div class="error-state">
+      <span class="error-icon">error</span>
+      <p>{{ error }}</p>
+      <button class="btn-retry" (click)="chargerStatistiques()">Réessayer</button>
+    </div>
+  }
+
+  <!-- Statistiques Content -->
+  @if (!loading && !error && statistiques) {
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon">reports</div>
+        <div class="kpi-content">
+          <h3 class="kpi-title">Total Rapports</h3>
+          <p class="kpi-value">{{ statistiques.total_rapports }}</p>
+          <span class="kpi-label">Déposés cette année</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon">plagiarism</div>
+        <div class="kpi-content">
+          <h3 class="kpi-title">Taux de Plagiat Moyen</h3>
+          <p class="kpi-value" [style.color]="getPlagiatColor(statistiques.taux_plagiat_moyen)">
+            {{ statistiques.taux_plagiat_moyen.toFixed(1) }}%
+          </p>
+          <span class="kpi-label">{{ getPlagiatLabel(statistiques.taux_plagiat_moyen) }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon">pending</div>
+        <div class="kpi-content">
+          <h3 class="kpi-title">Notes en Attente</h3>
+          <p class="kpi-value">{{ statistiques.notes_en_attente }}</p>
+          <span class="kpi-label">Validation requise</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon">validation</div>
+        <div class="kpi-content">
+          <h3 class="kpi-title">Taux de Validation</h3>
+          <p class="kpi-value">
+            @if (statistiques.notes_validees + statistiques.notes_rejetees > 0) {
+              {{ ((statistiques.notes_validees / (statistiques.notes_validees + statistiques.notes_rejetees)) * 100).toFixed(1) }}%
+            } @else {
+              0%
+            }
+          </p>
+          <span class="kpi-label">Notes validées</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-grid">
+      <!-- Rapports par Filière -->
+      <div class="chart-card">
+        <h3 class="chart-title">Rapports par Filière</h3>
+        <div class="chart-content">
+          @for (filiere of statistiques.rapports_par_filiere; track filiere.filiere) {
+            <div class="filiere-item">
+              <div class="filiere-info">
+                <span class="filiere-name">{{ filiere.filiere }}</span>
+                <span class="filiere-count">{{ filiere.count }} rapports</span>
+              </div>
+              <div class="filiere-stats">
+                <div class="progress-bar">
+                  <div 
+                    class="progress-fill" 
+                    [style.width.%]="getProgressPercentage(filiere.count)"
+                    [style.background-color]="getPlagiatColor(filiere.taux_plagiat)">
+                  </div>
+                </div>
+                <span class="plagiat-rate" [style.color]="getPlagiatColor(filiere.taux_plagiat)">
+                  {{ filiere.taux_plagiat.toFixed(1) }}% plagiat
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Évolution Temporelle -->
+      <div class="chart-card">
+        <h3 class="chart-title">Évolution Mensuelle</h3>
+        <div class="chart-content">
+          <div class="evolution-chart">
+            @for (data of evolution; track data.mois) {
+              <div class="month-bar">
+                <div class="month-label">{{ data.mois }}</div>
+                <div class="bar-container">
+                  <div class="bar rapports-bar" [style.height.%]="(data.rapports / 35) * 100"></div>
+                  <div class="bar plagiat-bar" [style.height.%]="(data.plagiat / 35) * 100"></div>
+                </div>
+              </div>
+            }
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <span class="legend-color rapports-color"></span>
+              <span class="legend-label">Rapports</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color plagiat-color"></span>
+              <span class="legend-label">Taux plagiat moyen</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes Validation Status -->
+    <div class="validation-card">
+      <h3 class="card-title">Statut de Validation des Notes</h3>
+      <div class="validation-stats">
+        <div class="stat-item">
+          <div class="stat-circle validated">
+            <span class="stat-number">{{ statistiques.notes_validees }}</span>
+          </div>
+          <span class="stat-label">Validées</span>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-circle pending">
+            <span class="stat-number">{{ statistiques.notes_en_attente }}</span>
+          </div>
+          <span class="stat-label">En attente</span>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-circle rejected">
+            <span class="stat-number">{{ statistiques.notes_rejetees }}</span>
+          </div>
+          <span class="stat-label">Rejetées</span>
+        </div>
+      </div>
+    </div>
+  }
+</div>

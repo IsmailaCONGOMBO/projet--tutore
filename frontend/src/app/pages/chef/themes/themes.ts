@@ -1,75 +1,95 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SlicePipe } from '@angular/common';
-import { ThemeChefService, ThemeChef } from '../../../core/services/theme-chef.service';
+import { ThemeService, Theme } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-chef-themes',
-  imports: [FormsModule, SlicePipe],
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './themes.html',
   styleUrl: './themes.css'
 })
 export class ChefThemes implements OnInit {
-  private svc = inject(ThemeChefService);
+  private svc = inject(ThemeService);
 
-  themes     = signal<ThemeChef[]>([]);
-  loading    = signal(true);
-  success    = signal('');
-  error      = signal('');
+  themes = signal<Theme[]>([]);
+  loading = signal(false);
+  
+  selectedTheme = signal<Theme | null>(null);
+  similarity = signal<{ score: number; titre: string } | null>(null);
+  checkingSimilarity = signal(false);
 
-  // Modal rejet
-  showModal    = signal(false);
-  motif        = '';
-  themeEnCours = signal<ThemeChef | null>(null);
-  submitting   = signal(false);
+  showRejectModal = signal(false);
+  motifRejet = '';
 
-  ngOnInit() { this.load(); }
+  message = signal<{ type: 'success' | 'error', text: string } | null>(null);
 
-  load() {
+  ngOnInit() {
+    this.chargerThemes();
+  }
+
+  chargerThemes() {
     this.loading.set(true);
-    this.svc.getThemes('EN_ATTENTE').subscribe({
-      next: (t) => { this.themes.set(t); this.loading.set(false); },
-      error: ()  => this.loading.set(false)
-    });
-  }
-
-  valider(theme: ThemeChef) {
-    this.svc.valider(theme.id).subscribe({
-      next: () => {
-        this.themes.update(list => list.filter(t => t.id !== theme.id));
-        this.notify(`✅ Thème "${theme.titre}" validé.`);
+    this.svc.getThemesChef().subscribe({
+      next: (data) => {
+        this.themes.set(data);
+        this.loading.set(false);
       },
-      error: (e) => this.error.set(e.error?.message || 'Erreur lors de la validation.')
+      error: () => this.loading.set(false)
     });
   }
 
-  ouvrirRejet(theme: ThemeChef) {
-    this.themeEnCours.set(theme);
-    this.motif = '';
-    this.error.set('');
-    this.showModal.set(true);
+  checkSimilarity(t: Theme) {
+    this.selectedTheme.set(t);
+    this.checkingSimilarity.set(true);
+    this.similarity.set(null);
+    
+    this.svc.checkSimilarity(t.id).subscribe({
+      next: (res) => {
+        this.similarity.set(res);
+        this.checkingSimilarity.set(false);
+      },
+      error: () => this.checkingSimilarity.set(false)
+    });
   }
 
-  confirmerRejet() {
-    if (!this.motif.trim()) { this.error.set('Le motif est obligatoire.'); return; }
-    const theme = this.themeEnCours()!;
-    this.submitting.set(true);
-    this.svc.rejeter(theme.id, this.motif).subscribe({
-      next: () => {
-        this.submitting.set(false);
-        this.showModal.set(false);
-        this.themes.update(list => list.filter(t => t.id !== theme.id));
-        this.notify(`❌ Thème "${theme.titre}" rejeté.`);
+  valider(t: Theme) {
+    if (!confirm('Voulez-vous valider ce thème et le transmettre à l\'Admin ?')) return;
+    
+    this.svc.validerChef(t.id).subscribe({
+      next: (res) => {
+        this.message.set({ type: 'success', text: res.message });
+        this.chargerThemes();
+        this.selectedTheme.set(null);
       },
       error: (e) => {
-        this.submitting.set(false);
-        this.error.set(e.error?.message || 'Erreur lors du rejet.');
+        this.message.set({ type: 'error', text: e.error?.message || 'Erreur lors de la validation.' });
       }
     });
   }
 
-  private notify(msg: string) {
-    this.success.set(msg);
-    setTimeout(() => this.success.set(''), 4000);
+  ouvrirRejet(t: Theme) {
+    this.selectedTheme.set(t);
+    this.motifRejet = '';
+    this.showRejectModal.set(true);
+  }
+
+  confirmerRejet() {
+    if (!this.motifRejet.trim()) return;
+    const theme = this.selectedTheme();
+    if (!theme) return;
+
+    this.svc.rejeterChef(theme.id, this.motifRejet).subscribe({
+      next: () => {
+        this.message.set({ type: 'success', text: 'Thème rejeté avec succès.' });
+        this.showRejectModal.set(false);
+        this.chargerThemes();
+        this.selectedTheme.set(null);
+      },
+      error: (e) => {
+        this.message.set({ type: 'error', text: e.error?.message || 'Erreur lors du rejet.' });
+      }
+    });
   }
 }

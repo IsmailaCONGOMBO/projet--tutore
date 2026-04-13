@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Note;
 use App\Models\Rapport;
+use App\Models\Notification;
 
 class NoteController extends Controller
 {
@@ -73,7 +74,78 @@ class NoteController extends Controller
             'valeur' => $note->valeur,
             'commentaire' => $note->commentaire,
             'date' => $note->soumise_le->format('d/m/Y'),
-            'rapport_titre' => $note->rapport->titre
+            'rapport_titre' => $note->rapport->titre,
+            'statut_validation' => $note->statut_validation,
+            'motif_rejet' => $note->motif_rejet
         ]);
+    }
+
+    // Pour l'Admin : récupérer toutes les notes en attente
+    public function enAttente(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        $notes = Note::with(['rapport.etudiant.user', 'enseignant.user'])
+            ->where('statut_validation', 'EN ATTENTE')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($notes);
+    }
+
+    // Pour l'Admin : valider une note
+    public function valider(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        $note = Note::with('rapport.etudiant.user')->findOrFail($id);
+        $note->update([
+            'statut_validation' => 'VALIDÉ',
+            'motif_rejet' => null
+        ]);
+
+        // Notifier l'étudiant
+        if ($note->rapport && $note->rapport->etudiant && $note->rapport->etudiant->user) {
+            Notification::create([
+                'user_id' => $note->rapport->etudiant->user->id,
+                'titre' => 'Note validée',
+                'message' => 'Votre note pour le rapport "' . $note->rapport->titre . '" a été validée.',
+                'type' => 'rapport'
+            ]);
+        }
+
+        return response()->json(['message' => 'Note validée.']);
+    }
+
+    // Pour l'Admin : rejeter une note
+    public function rejeter(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        $request->validate(['motif' => 'required|string']);
+
+        $note = Note::with(['enseignant.user', 'rapport'])->findOrFail($id);
+        $note->update([
+            'statut_validation' => 'REJETÉ',
+            'motif_rejet' => $request->motif
+        ]);
+
+        // Notifier l'enseignant
+        if ($note->enseignant && $note->enseignant->user) {
+            Notification::create([
+                'user_id' => $note->enseignant->user->id,
+                'titre' => 'Note rejetée',
+                'message' => 'La note soumise pour le rapport "' . $note->rapport->titre . '" a été rejetée. Motif : ' . $request->motif,
+                'type' => 'personnalise'
+            ]);
+        }
+
+        return response()->json(['message' => 'Note rejetée.']);
     }
 }

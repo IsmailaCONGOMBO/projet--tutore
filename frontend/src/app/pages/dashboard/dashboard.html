@@ -1,44 +1,121 @@
-<div class="dash-wrapper">
-  <nav class="dash-nav">
-    <div class="nav-brand">
-      <span class="nav-icon">🎓</span>
-      <span>IBAM</span>
-      <span class="nav-divider"></span>
-      <span class="nav-subtitle">Administration</span>
+<div class="dash-container">
+  
+  <div class="dash-welcome">
+    <div class="welcome-text">
+      <h1>Dashboard <span>Directeur</span></h1>
+      <p>Aperçu global de l'activité du système de détection de plagiat.</p>
     </div>
-    <div class="nav-right">
-      <span class="nav-user">{{ user.name || user.email }}</span>
-      <button (click)="logout()" class="btn-logout">Déconnexion</button>
+    <div class="welcome-date">
+      <span class="material-icons">calendar_today</span>
+      {{ today | date:'dd MMMM yyyy' }}
     </div>
-  </nav>
+  </div>
 
-  <main class="dash-main">
-    <div class="dash-welcome">
-      <h1>Bienvenue, <span>{{ user.name || 'Administrateur' }}</span> 👋</h1>
-      <p>Tableau de bord — Système de Détection de Plagiat</p>
+  <!-- Key Metrics Grid -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon-wrapper blue">
+        <span class="material-icons">description</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats()?.total_rapports || 0 }}</span>
+        <span class="stat-label">Rapports déposés</span>
+      </div>
+      <div class="stat-trend positive">
+        <span class="material-icons">trending_up</span>
+        <span>Global</span>
+      </div>
     </div>
 
-    <div class="dash-grid">
-      <div class="dash-card" routerLink="/utilisateurs">
-        <div class="dash-card-icon">👥</div>
-        <div class="dash-card-label">Utilisateurs</div>
-        <div class="dash-card-hint">Gérer les comptes</div>
+    <div class="stat-card">
+      <div class="stat-icon-wrapper orange">
+        <span class="material-icons">report_problem</span>
       </div>
-      <div class="dash-card">
-        <div class="dash-card-icon">📄</div>
-        <div class="dash-card-label">Rapports</div>
-        <div class="dash-card-hint">Analyser les soumissions</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats()?.taux_plagiat_moyen || 0 }}%</span>
+        <span class="stat-label">Taux de plagiat moyen</span>
       </div>
-      <div class="dash-card">
-        <div class="dash-card-icon">⚙️</div>
-        <div class="dash-card-label">Paramètres</div>
-        <div class="dash-card-hint">Configurer le système</div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-card-icon">🔔</div>
-        <div class="dash-card-label">Notifications</div>
-        <div class="dash-card-hint">Alertes étudiants</div>
+      <div class="stat-trend" [ngClass]="(stats()?.taux_plagiat_moyen || 0) > 30 ? 'negative' : 'positive'">
+        <span class="material-icons">{{ (stats()?.taux_plagiat_moyen || 0) > 30 ? 'warning' : 'check_circle' }}</span>
+        <span>Alerte</span>
       </div>
     </div>
-  </main>
+
+    <div class="stat-card">
+      <div class="stat-icon-wrapper purple">
+        <span class="material-icons">pending_actions</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats()?.notes_en_attente || 0 }}</span>
+        <span class="stat-label">Notes en attente</span>
+      </div>
+      <div class="stat-trend warning">
+        <span class="material-icons">priority_high</span>
+        <span>À valider</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon-wrapper green">
+        <span class="material-icons">task_alt</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats()?.notes_validees || 0 }}</span>
+        <span class="stat-label">Notes validées</span>
+      </div>
+      <div class="stat-trend positive">
+        <span class="material-icons">done_all</span>
+        <span>Terminé</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-sections">
+    <!-- Chart Preview / Activity -->
+    <div class="section-card main-chart">
+      <div class="section-header">
+        <h2>Filières les plus actives</h2>
+        <button routerLink="/admin/statistiques" class="btn-link">Voir détails</button>
+      </div>
+      <div class="filiere-list">
+        @for (filiere of stats()?.rapports_par_filiere; track filiere.filiere) {
+          <div class="filiere-item">
+            <div class="filiere-info">
+              <span class="filiere-name">{{ filiere.filiere }}</span>
+              <span class="filiere-count">{{ filiere.count }} rapports</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="getProgress(filiere.count)"></div>
+            </div>
+          </div>
+        } @empty {
+          <p class="empty-msg">Aucune donnée disponible</p>
+        }
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section-card quick-actions">
+      <h2>Actions Rapides</h2>
+      <div class="actions-grid">
+        <button class="action-btn" routerLink="/admin/utilisateurs">
+          <span class="material-icons">person_add</span>
+          <span>Gérer Utilisateurs</span>
+        </button>
+        <button class="action-btn" routerLink="/admin/validation-notes">
+          <span class="material-icons">rate_review</span>
+          <span>Valider les Notes</span>
+        </button>
+        <button class="action-btn" routerLink="/admin/rapports-corrections">
+          <span class="material-icons">folder_shared</span>
+          <span>Tous les Rapports</span>
+        </button>
+        <button class="action-btn" routerLink="/admin/notifications">
+          <span class="material-icons">history</span>
+          <span>Historique</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>

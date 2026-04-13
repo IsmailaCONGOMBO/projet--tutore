@@ -1,57 +1,126 @@
-<div class="page">
-  <div class="page-header">
-    <h1>Déposer un rapport</h1>
-    <p>Soumettez votre rapport de fin de cycle au format PDF (max 20 Mo).</p>
+<div class="rapport-page">
+  <div class="header">
+    <h1>Dépôt de Rapport</h1>
+    <p>Testez votre rapport contre le plagiat puis soumettez-le officiellement.</p>
   </div>
 
-  <div class="form-card">
-    @if (success()) { <div class="alert-success">✓ {{ success() }}</div> }
-    @if (error())   { <div class="alert-error">⚠️ {{ error() }}</div> }
-
-    <form (ngSubmit)="submit()">
-      <div class="form-group">
-        <label>Titre du rapport <span class="optional">(optionnel)</span></label>
-        <input type="text" [(ngModel)]="titre" name="titre"
-          placeholder="Ex : Rapport de stage — Développement web" />
+  <div class="workflow-grid">
+    
+    <!-- ÉTAPE 1: TEST VOLATILE -->
+    <div class="card test-card">
+      <div class="card-header">
+        <span class="step-num">1</span>
+        <h3>Auto-contrôle (Test rapide)</h3>
       </div>
-
-      <!-- Zone drag & drop -->
-      <div class="form-group">
-        <label>Fichier PDF <span class="req">*</span></label>
-        <div
-          class="drop-zone"
-          [class.drag-active]="dragOver()"
-          [class.has-file]="fichier"
-          (dragover)="$event.preventDefault(); dragOver.set(true)"
-          (dragleave)="dragOver.set(false)"
-          (drop)="onDrop($event)"
-          (click)="fileInput.click()"
-        >
-          @if (fichier) {
-            <div class="file-preview">
-              <span class="file-icon">📄</span>
-              <div class="file-info">
-                <span class="file-name">{{ fichier.name }}</span>
-                <span class="file-size">{{ fileSize }}</span>
-              </div>
-              <button type="button" class="file-remove" (click)="$event.stopPropagation(); fichier = null">✕</button>
-            </div>
-          } @else {
-            <div class="drop-placeholder">
-              <span class="drop-icon">📤</span>
-              <p>Glissez votre PDF ici ou <span class="drop-link">cliquez pour parcourir</span></p>
-              <span class="drop-hint">PDF uniquement — max 20 Mo</span>
-            </div>
-          }
+      <div class="card-body">
+        <p class="hint">Ce test est confidentiel et n'impacte pas votre dossier officiel.</p>
+        <div class="upload-zone">
+          <input type="file" (change)="onFileSelected($event, true)" accept=".pdf">
+          <button class="btn-test" (click)="lancerTest()" [disabled]="!testFile || testing()">
+            @if (testing()) { <span class="spinner"></span> Analyse en cours... }
+            @else { Analyser le document }
+          </button>
         </div>
-        <input #fileInput type="file" accept=".pdf" (change)="onFileChange($event)" style="display:none" />
-      </div>
 
-      <div class="form-footer">
-        <button type="submit" class="btn-submit" [disabled]="loading() || !fichier">
-          {{ loading() ? 'Envoi en cours…' : '📤 Déposer le rapport' }}
+        @if (testResult(); as res) {
+          <div class="test-result" [class.danger]="res.taux > 20">
+            <div class="score-display">
+              <span class="label">Taux de plagiat détecté :</span>
+              <span class="value">{{ res.taux }}%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="fill" [style.width.%]="res.taux"></div>
+            </div>
+            <p class="status-msg">
+              @if (res.taux > 20) { ⚠️ Ce taux est trop élevé. Veuillez corriger avant soumission. }
+              @else { ✅ Ce taux est acceptable pour la soumission officielle. }
+            </p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ÉTAPE 2: SOUMISSION OFFICIELLE -->
+    <div class="card submit-card">
+      <div class="card-header">
+        <span class="step-num">2</span>
+        <h3>Soumission officielle</h3>
+      </div>
+      <div class="card-body">
+        @if (message(); as msg) { <div [class]="'alert alert-' + msg.type">{{ msg.text }}</div> }
+
+        <div class="form-group">
+          <label>Titre du rapport</label>
+          <input type="text" [(ngModel)]="titre" placeholder="Titre définitif de votre travail">
+        </div>
+
+        <div class="form-group">
+          <label>Thème associé</label>
+          <select [(ngModel)]="selectedThemeId">
+            <option [value]="0">Aucun thème (Libre)</option>
+            @for (t of themes(); track t.id) {
+              <option [value]="t.id">{{ t.titre }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Fichier PDF (Version finale)</label>
+          <input type="file" (change)="onFileSelected($event, false)" accept=".pdf">
+        </div>
+
+        <button class="btn-submit" (click)="soumettre()" [disabled]="loading() || !selectedFile || !titre">
+          @if (loading()) { <span class="spinner"></span> Envoi... }
+          @else { Soumettre officiellement }
         </button>
       </div>
-    </form>
+    </div>
+
   </div>
+
+  <!-- HISTORIQUE DES SOUMISSIONS -->
+  <div class="history-section">
+    <h3>Mes rapports officiels</h3>
+    <div class="table-container">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th>Titre</th>
+            <th>Date</th>
+            <th>Plagiat</th>
+            <th>Note</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rapports(); track r.id) {
+            <tr>
+              <td>{{ r.titre }}</td>
+              <td>{{ r.created_at | date:'dd/MM/yyyy' }}</td>
+              <td>
+                @if (r.taux_plagiat !== undefined) {
+                  <span [class.text-danger]="r.taux_plagiat > 20">{{ r.taux_plagiat }}%</span>
+                } @else { -- }
+              </td>
+              <td>{{ r.note !== null ? r.note + '/20' : '--' }}</td>
+              <td>
+                <span [class]="'badge ' + getStatusClass(r.statut)">
+                  {{ r.statut.replace('_', ' ') }}
+                </span>
+              </td>
+              <td>
+                <a [href]="'http://localhost:8000/api/rapports/' + r.id + '/download'" target="_blank" class="btn-icon">
+                  <span class="material-icons">download</span>
+                </a>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="empty">Aucun rapport soumis officiellement.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
