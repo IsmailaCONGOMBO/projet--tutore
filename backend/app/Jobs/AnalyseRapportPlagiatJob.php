@@ -3,8 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\Rapport;
-use App\Models\AnalysePlagiat;
-use App\Services\PlagiarismService;
+use App\Services\Plagiat\Contracts\PlagiatAnalyzerServiceInterface;
+use App\Services\Plagiat\Contracts\PlagiatReportServiceInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -18,76 +18,68 @@ class AnalyseRapportPlagiatJob implements ShouldQueue
 
     protected $rapportId;
 
+    /**
+     * Create a new job instance.
+     */
     public function __construct($rapportId)
     {
         $this->rapportId = $rapportId;
     }
 
-    public function handle(PlagiarismService $plagiarismService)
-    {
+    /**
+     * Execute the job.
+     */
+    public function handle(
+        PlagiatAnalyzerServiceInterface $analyzer,
+        PlagiatReportServiceInterface $reporter
+    ): void {
         $rapport = Rapport::find($this->rapportId);
-        if (!$rapport) return;
+        
+        if (!$rapport) {
+            Log::error("AnalyseRapportPlagiatJob: Rapport $this->rapportId introuvable.");
+            return;
+        }
 
         try {
-            // Mettre à jour le statut
-            $rapport->update(['statut' => 'ANALYSE']);
+            Log::info("AnalyseRapportPlagiatJob: Début du traitement pour le rapport $this->rapportId.");
 
-            // 1. Extraire le texte du nouveau rapport
-            $newText = $plagiarismService->extractText($rapport->fichier_path);
-            if (empty($newText)) {
-                throw new \Exception("Le texte n'a pas pu être extrait du PDF.");
+            // Le fichier est supposé se trouver dans storage/app/public/...
+            // Ajuster le chemin selon la structure réelle de stockage
+            $filePath = storage_path('app/public/' . $rapport->fichier_path);
+            
+            if (!file_exists($filePath)) {
+                // Essayer sans le préfixe public si nécessaire
+                $filePath = storage_path('app/' . $rapport->fichier_path);
             }
 
-            // 2. Comparer avec les anciens rapports (tous sauf lui-même)
-            // On récupère les textes déjà analysés ou archivés
-            $autresRapports = Rapport::where('id', '!=', $rapport->id)
-                ->whereIn('statut', ['CORRIGE', 'NOTE', 'ARCHIVE'])
-                ->get();
-
-            $totalTaux = 0;
-            $allSuspectPassages = [];
-
-            foreach ($autresRapports as $autre) {
-                // Pour simplifier, on re-extrait le texte. 
-                // Dans une vraie app, on stockerait le texte extrait en DB pour gagner du temps.
-                $autreText = $plagiarismService->extractText($autre->fichier_path);
-                $result = $plagiarismService->compareTexts($newText, $autreText);
-                
-                if ($result['taux'] > 0) {
-                    $totalTaux += $result['taux'];
-                    foreach ($result['passages'] as $p) {
-                        $p['source_id'] = $autre->id;
-                        $p['source_titre'] = $autre->titre;
-                        $allSuspectPassages[] = $p;
-                    }
-                }
+            if (!file_exists($filePath)) {
+                throw new \Exception("Fichier PDF introuvable : " . $rapport->fichier_path);
             }
 
-            // 3. Enregistrer l'analyse
-            AnalysePlagiat::updateOrCreate(
-                ['rapport_id' => $rapport->id],
-                [
-                    'taux_plagiat' => min(100, $totalTaux), // On capte à 100%
-                    'passages_suspects' => $allSuspectPassages,
-                    'statut' => 'TERMINE',
-                    'analyse_le' => now()
-                ]
-            );
+            // 1. Lancer l'analyse
+            $result = $analyzer->analyze($filePath, false);
 
-            // 4. Mettre à jour le statut du rapport pour l'enseignant
-            $rapport->update(['statut' => 'CORRIGE']); // Prêt pour correction/note
+            // 2. Sauvegarder le résultat
+            $reporter->saveAnalysis($this->rapportId, $result);
+
+            // 3. Mettre à jour le taux global sur le modèle Rapport lui-même pour un accès rapide
+            $rapport->update([
+                'taux_plagiat' => $result['taux_global'],
+                'date_analyse' => now(),
+                'statut' => $result['decision'] === 'accepte' ? 'VALIDE' : 'REJETE'
+            ]);
+
+            Log::info("AnalyseRapportPlagiatJob: Analyse terminée pour le rapport $this->rapportId. Taux: " . $result['taux_global'] . "%");
+
+            // Optionnel: Déclencher un événement pour notifier le frontend ou l'étudiant
+            // event(new \App\Events\AnalyseCompleted($rapport));
 
         } catch (\Exception $e) {
-            Log::error("Erreur Job Analyse Plagiat : " . $e->getMessage());
+            Log::error("AnalyseRapportPlagiatJob: Erreur pour le rapport $this->rapportId - " . $e->getMessage());
             
-            AnalysePlagiat::updateOrCreate(
-                ['rapport_id' => $rapport->id],
-                [
-                    'statut' => 'ECHEC',
-                    'analyse_le' => now()
-                ]
-            );
-            $rapport->update(['statut' => 'EN_ATTENTE']);
+            $rapport->update([
+                'statut' => 'ERREUR_ANALYSE'
+            ]);
         }
     }
 }

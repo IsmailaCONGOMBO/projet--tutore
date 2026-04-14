@@ -10,10 +10,13 @@ return new class extends Migration {
         Schema::create('analyses_plagiat', function (Blueprint $table) {
             $table->id();
             $table->foreignId('rapport_id')->constrained()->onDelete('cascade');
-            $table->decimal('taux_plagiat', 5, 2)->default(0); // Pourcentage ex: 23.45
-            $table->json('passages_suspects')->nullable(); // Liste des passages détectés
-            $table->enum('statut', ['EN_COURS', 'TERMINE', 'ECHEC'])->default('EN_COURS');
-            $table->timestamp('analyse_le')->nullable();
+            $table->decimal('taux_global', 5, 2)->default(0);
+            $table->decimal('taux_chapitre1', 5, 2)->nullable();
+            $table->decimal('taux_chapitre2', 5, 2)->nullable();
+            $table->decimal('taux_chapitre3', 5, 2)->nullable();
+            $table->decimal('taux_rapport_complet', 5, 2)->nullable();
+            $table->enum('decision', ['accepte', 'rejete'])->nullable();
+            $table->json('payload_json')->nullable();
             $table->timestamps();
         });
     }

@@ -10,14 +10,23 @@ class AnalysePlagiat extends Model
     protected $table = 'analyses_plagiat';
 
     protected $fillable = [
-        'rapport_id', 'taux_plagiat', 'passages_suspects',
-        'statut', 'analyse_le'
+        'rapport_id', 
+        'taux_global', 
+        'taux_chapitre1',
+        'taux_chapitre2',
+        'taux_chapitre3',
+        'taux_rapport_complet',
+        'decision', 
+        'payload_json'
     ];
 
     protected $casts = [
-        'taux_plagiat'      => 'float',
-        'passages_suspects' => 'array',
-        'analyse_le'        => 'datetime',
+        'taux_global'          => 'float',
+        'taux_chapitre1'       => 'float',
+        'taux_chapitre2'       => 'float',
+        'taux_chapitre3'       => 'float',
+        'taux_rapport_complet' => 'float',
+        'payload_json'         => 'array',
     ];
 
     public function rapport(): BelongsTo

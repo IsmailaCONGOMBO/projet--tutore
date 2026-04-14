@@ -7,6 +7,7 @@ use App\Http\Controllers\NoteController;
 use App\Http\Controllers\AnalyseController;
 use App\Http\Controllers\StatistiqueController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ThemeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -27,7 +28,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Workflow Rapports
-    Route::post('/rapports/test', [RapportController::class, 'testerRapport']);
+    Route::post('/rapports/tester', [\App\Http\Controllers\PlagiatController::class, 'tester']);
+    Route::post('/rapports/{id}/analyser', [\App\Http\Controllers\PlagiatController::class, 'analyser']);
+    Route::get('/rapports/{id}/analyse-resultat', [\App\Http\Controllers\PlagiatController::class, 'getResultat']);
     Route::get('/rapports', [RapportController::class, 'index']);
     Route::post('/rapports', [RapportController::class, 'store']);
     Route::get('/rapports/tous', [RapportController::class, 'tous']);
