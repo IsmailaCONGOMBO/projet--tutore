@@ -10,8 +10,11 @@ export interface Rapport {
   seuil_plagiat?: number;
   note?: number;
   commentaire?: string;
+  etudiant_id?: number;
+  enseignant_id?: number;
+  theme_id?: number;
   etudiant?: { user: { id: number, name: string } };
-  enseignant?: { user: { id: number, name: string } };
+  enseignant?: { id: number, user: { id: number, name: string } };
   created_at: string;
   date_analyse?: string;
   date_correction?: string;
