@@ -54,30 +54,50 @@ class NoteController extends Controller
     public function maNote(Request $request)
     {
         $user = $request->user();
-        if (!$user->etudiant) {
+        if (!$user || !$user->etudiant) {
             return response()->json(null, 204);
         }
 
-        // On cherche la note du dernier rapport noté
+        // 1. Chercher d'abord dans la table Notes (Ancien workflow / Modulaire)
         $note = Note::whereHas('rapport', function($q) use ($user) {
             $q->where('etudiant_id', $user->etudiant->id);
         })
-        ->with('rapport')
+        ->with(['rapport', 'enseignant.user'])
         ->orderBy('created_at', 'desc')
         ->first();
 
-        if (!$note) {
-            return response()->json(null, 204);
+        if ($note) {
+            return response()->json([
+                'valeur' => $note->valeur,
+                'commentaire' => $note->commentaire,
+                'date_attribution' => $note->soumise_le ? $note->soumise_le->format('Y-m-d H:i:s') : $note->created_at->format('Y-m-d H:i:s'),
+                'rapport_titre' => $note->rapport->titre,
+                'enseignant' => $note->enseignant->user->name ?? 'Enseignant',
+                'statut_validation' => $note->statut_validation,
+                'motif_rejet' => $note->motif_rejet
+            ]);
         }
 
-        return response()->json([
-            'valeur' => $note->valeur,
-            'commentaire' => $note->commentaire,
-            'date' => $note->soumise_le->format('d/m/Y'),
-            'rapport_titre' => $note->rapport->titre,
-            'statut_validation' => $note->statut_validation,
-            'motif_rejet' => $note->motif_rejet
-        ]);
+        // 2. Fallback : Chercher directement sur le rapport (Nouveau workflow intégré)
+        $rapport = Rapport::where('etudiant_id', $user->etudiant->id)
+            ->whereNotNull('note')
+            ->with('enseignant.user')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if ($rapport) {
+            return response()->json([
+                'valeur' => $rapport->note,
+                'commentaire' => $rapport->commentaire,
+                'date_attribution' => $rapport->date_correction ? $rapport->date_correction->format('Y-m-d H:i:s') : $rapport->updated_at->format('Y-m-d H:i:s'),
+                'rapport_titre' => $rapport->titre,
+                'enseignant' => $rapport->enseignant->user->name ?? 'Enseignant affecté',
+                'statut_validation' => 'VALIDÉ',
+                'motif_rejet' => null
+            ]);
+        }
+
+        return response()->json(null, 204);
     }
 
     // Pour l'Admin : récupérer toutes les notes en attente

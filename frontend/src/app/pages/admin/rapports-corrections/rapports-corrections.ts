@@ -16,7 +16,7 @@ export class AdminRapportsCorrections implements OnInit {
   rapports = signal<any[]>([]);
   loading = signal(true);
   searchTerm = signal('');
-  filterStatut = signal('TOUS');
+  filterStatut = signal('ALL');
 
   filteredRapports = computed(() => {
     const term = this.searchTerm().toLowerCase();
@@ -51,11 +51,13 @@ export class AdminRapportsCorrections implements OnInit {
 
   getStatutClass(statut: string): string {
     switch (statut) {
-      case 'EN_ATTENTE': return 'badge-attente';
-      case 'ANALYSE': return 'badge-analyse';
-      case 'NOTE': return 'badge-note';
-      case 'ARCHIVE': return 'badge-archive';
-      default: return '';
+      case 'EN_ATTENTE_ANALYSE_CHEF': return 'badge-attente';
+      case 'VALIDE_PLAGIAT': return 'badge-valide-plagiat';
+      case 'REJETE_PLAGIAT': return 'badge-rejete';
+      case 'ASSIGNE_ENSEIGNANT': return 'badge-assigne';
+      case 'NOTE_SOUMISE': return 'badge-note';
+      case 'VALIDE_FINAL': return 'badge-archive';
+      default: return 'badge-default';
     }
   }
 

@@ -24,8 +24,13 @@ class StatistiqueController extends Controller
         // Total des rapports
         $totalRapports = Rapport::count();
 
-        // Taux de plagiat moyen
-        $tauxPlagiatMoyen = AnalysePlagiat::avg('taux_plagiat') ?? 0;
+        // Taux de plagiat moyen (Priorité au champ direct sur Rapport)
+        $tauxPlagiatMoyen = Rapport::whereNotNull('taux_plagiat')
+            ->orWhereHas('analyse')
+            ->get()
+            ->avg(function($r) {
+                return $r->taux_plagiat ?? ($r->analyse->taux_global ?? 0);
+            }) ?? 0;
 
         // Statistiques des notes
         $notesEnAttente = Note::where('statut_validation', 'EN ATTENTE')->count();
@@ -40,7 +45,7 @@ class StatistiqueController extends Controller
             ->select(
                 'filieres.nom as filiere',
                 DB::raw('COUNT(rapports.id) as count'),
-                DB::raw('COALESCE(AVG(analyses_plagiat.taux_plagiat), 0) as taux_plagiat')
+                DB::raw('AVG(COALESCE(rapports.taux_plagiat, analyses_plagiat.taux_global, 0)) as taux_plagiat')
             )
             ->groupBy('filieres.id', 'filieres.nom')
             ->orderBy('count', 'desc')
@@ -85,10 +90,10 @@ class StatistiqueController extends Controller
         // Calculer le taux de plagiat moyen par mois
         $result = [];
         foreach ($evolution as $data) {
-            $tauxPlagiat = DB::table('analyses_plagiat')
-                ->join('rapports', 'analyses_plagiat.rapport_id', '=', 'rapports.id')
+            $tauxPlagiat = DB::table('rapports')
+                ->leftJoin('analyses_plagiat', 'rapports.id', '=', 'analyses_plagiat.rapport_id')
                 ->where(DB::raw('DATE_FORMAT(rapports.created_at, "%Y-%m")'), $data->mois)
-                ->avg('analyses_plagiat.taux_plagiat') ?? 0;
+                ->avg(DB::raw('COALESCE(rapports.taux_plagiat, analyses_plagiat.taux_global, 0)')) ?? 0;
 
             $result[] = [
                 'mois' => date('M', strtotime($data->mois . '-01')),

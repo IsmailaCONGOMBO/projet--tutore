@@ -15,9 +15,11 @@
     >
     <select class="filter-select" (change)="onFilter($event)">
       <option value="ALL">Tous les statuts</option>
-      <option value="VALIDE">Validés</option>
-      <option value="REJETE">Rejetés</option>
-      <option value="EN_ATTENTE">En attente</option>
+      <option value="EN_ATTENTE_ANALYSE_CHEF">En attente d'analyse</option>
+      <option value="VALIDE_PLAGIAT">Validés Plagiat</option>
+      <option value="ASSIGNE_ENSEIGNANT">Assignés</option>
+      <option value="NOTE_SOUMISE">Notes Soumises</option>
+      <option value="VALIDE_FINAL">Validés Final</option>
     </select>
   </div>
 
@@ -70,8 +72,8 @@
                 {{ r.note !== null ? r.note + '/20' : '-' }}
               </td>
               <td>
-                <span class="badge" [class]="'badge-' + r.statut">
-                  {{ r.statut }}
+                <span class="badge" [class]="getStatutClass(r.statut)">
+                  {{ r.statut.replace('_', ' ') }}
                 </span>
               </td>
               <td>

@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Espace Admin - Validation des notes
     Route::prefix('notes')->group(function () {
+        Route::get('/ma-note', [NoteController::class, 'maNote']);
         Route::get('/en-attente', [NoteController::class, 'enAttente']);
         Route::post('/valider/{id}', [NoteController::class, 'valider']);
         Route::post('/rejeter/{id}', [NoteController::class, 'rejeter']);

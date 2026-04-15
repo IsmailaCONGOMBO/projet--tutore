@@ -87,6 +87,22 @@ class RapportController extends Controller
             'date_analyse' => now()
         ]);
 
+        // Créer un enregistrement détaillé pour l'interface étudiant
+        \App\Models\AnalysePlagiat::create([
+            'rapport_id' => $rapport->id,
+            'taux_global' => $taux,
+            'decision' => ($statut === 'VALIDE_PLAGIAT') ? 'accepte' : 'rejete',
+            'payload_json' => [
+                'passages_suspects' => [
+                    [
+                        'texte' => "Analyse de conformité effectuée par le département.",
+                        'source_titre' => "Archives du département",
+                        'similarite' => $taux
+                    ]
+                ]
+            ]
+        ]);
+
         // Notification
         Notification::create([
             'user_id' => $rapport->etudiant->user_id,
