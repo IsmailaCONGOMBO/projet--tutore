@@ -1,0 +1,40 @@
+@import '../etudiant/etudiant-shared.css';
+
+/* ── Surcharges spécifiques enseignant ────────────────── */
+.page { max-width: 1000px; }
+
+/* Accentuation bleu royal pour les boutons */
+.btn-submit { background: #2563eb; }
+.btn-submit:hover:not(:disabled) { background: #1d4ed8; }
+
+/* Grid de dashboard enseignant */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: var(--white);
+  border: 1px solid var(--off-white-2);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s;
+}
+
+.stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+.stat-icon {
+  width: 50px; height: 50px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; background: var(--blue-50); color: var(--blue-600);
+}
+
+.stat-info { display: flex; flex-direction: column; }
+.stat-value { font-size: 1.5rem; font-weight: 700; color: var(--blue-900); }
+.stat-label { font-size: 0.82rem; color: var(--text-light); }

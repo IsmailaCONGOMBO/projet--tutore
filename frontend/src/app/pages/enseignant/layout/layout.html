@@ -1,16 +1,17 @@
 <div class="app-shell" [class.sidebar-collapsed]="!sidebarOpen()">
 
+  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <span class="brand-icon">🎓</span>
-      <span class="brand-text">P-DETECT</span>
+      <span class="brand-text">IBAM</span>
     </div>
 
     <div class="sidebar-user">
       <div class="user-avatar">{{ (user.name || 'E').charAt(0).toUpperCase() }}</div>
       <div class="user-info">
         <span class="user-name">{{ user.name || 'Enseignant' }}</span>
-        <span class="user-role">Enseignant Correcteur</span>
+        <span class="user-role">Correcteur</span>
       </div>
     </div>
 
@@ -30,11 +31,14 @@
     </button>
   </aside>
 
+  <!-- Main Area -->
   <div class="main-area">
     <header class="topbar">
-      <button class="toggle-btn" (click)="toggleSidebar()">☰</button>
+      <button class="toggle-btn" (click)="toggleSidebar()" title="Réduire le menu">
+        ☰
+      </button>
       <div class="topbar-center">
-        <span class="topbar-title">Plateforme Enseignant</span>
+        <span class="topbar-title">Espace Enseignant</span>
       </div>
       <div class="topbar-right">
         <span class="topbar-user">{{ user.name }}</span>

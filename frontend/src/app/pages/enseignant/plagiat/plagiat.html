@@ -1,0 +1,57 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <a routerLink="/enseignant/rapports" class="btn-back">← Retour aux rapports</a>
+      <h1>Rapport d'Analyse de Plagiat</h1>
+      <p>Détails des similitudes détectées pour le rapport #{{ rapportId }}</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Analyse des résultats en cours...</p>
+    </div>
+  } @else if (error()) {
+    <div class="alert-error">
+      {{ error() }}
+      <button (click)="loadAnalyse()" class="drop-link" style="background:none; border:none; cursor:pointer; margin-left: 10px;">Réessayer</button>
+    </div>
+  } @else if (analyse()) {
+    <div class="score-card" [style.background]="tauxBg" [style.border-color]="tauxColor">
+      <div class="score-circle" [style.border-color]="tauxColor">
+        <span class="score-num" [style.color]="tauxColor">{{ analyse()?.taux_plagiat }}%</span>
+        <span class="score-sub">Similitude</span>
+      </div>
+      <div class="score-right">
+        <span class="score-label" [style.color]="tauxColor">{{ tauxLabel }}</span>
+        <div class="progress-track">
+          <div class="progress-fill" [style.width.%]="taux" [style.background-color]="tauxColor"></div>
+        </div>
+        <p class="analyse-date">Ce score représente le pourcentage total de texte identifié comme provenant de sources externes sans citation appropriée.</p>
+      </div>
+    </div>
+
+    <div class="section-title">Passages Suspects</div>
+    
+    <div class="passages-list">
+      @for (p of analyse()?.passages_suspects; track $index) {
+        <div class="passage-card">
+          <div class="passage-header">
+            <span class="passage-source">Source : {{ p.source }}</span>
+            <span class="passage-sim" 
+              [class.sim-warn]="p.similarite <= 50" 
+              [class.sim-bad]="p.similarite > 50">
+              {{ p.similarite }}% de similitude
+            </span>
+          </div>
+          <p class="passage-text">"{{ p.texte }}"</p>
+        </div>
+      } @empty {
+        <div class="no-passages">
+          Aucun passage suspect important n'a été détecté. Le document semble intègre.
+        </div>
+      }
+    </div>
+  }
+</div>

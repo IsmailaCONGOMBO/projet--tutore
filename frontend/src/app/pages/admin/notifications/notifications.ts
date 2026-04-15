@@ -25,6 +25,8 @@ export class AdminNotifications implements OnInit {
     cible: 'tous',
     filiere_id: undefined
   });
+
+  notifications = signal<any[]>([]);
   
   // Types de notifications prédéfinies
   typesNotifications = [
@@ -41,7 +43,33 @@ export class AdminNotifications implements OnInit {
     { value: 'filiere', label: 'Filière spécifique', icon: 'department' }
   ];
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.chargerNotifications();
+  }
+
+  chargerNotifications() {
+    this.loading.set(true);
+    this.notificationService.getMes().subscribe({
+      next: (data: any[]) => {
+        this.notifications.set(data);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
+  }
+
+  marquerCommeLu(n: any) {
+    if (n.lu) return;
+    this.notificationService.marquerLu(n.id).subscribe(() => {
+      this.chargerNotifications();
+    });
+  }
+
+  toutMarquerCommeLu() {
+    this.notificationService.marquerTousLus().subscribe(() => {
+      this.chargerNotifications();
+    });
+  }
 
   onTypeChange(type: string) {
     const currentForm = this.notificationForm();

@@ -19,10 +19,14 @@ export class AdminRapportsCorrections implements OnInit {
   filterStatut = signal('TOUS');
 
   filteredRapports = computed(() => {
+    const term = this.searchTerm().toLowerCase();
+    const status = this.filterStatut();
+    
     return this.rapports().filter(r => {
-      const matchesSearch = r.titre.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
-                           r.etudiant.toLowerCase().includes(this.searchTerm().toLowerCase());
-      const matchesFilter = this.filterStatut() === 'TOUS' || r.statut === this.filterStatut();
+      const matchesSearch = !term || 
+                           r.titre?.toLowerCase().includes(term) ||
+                           r.etudiant?.user?.name.toLowerCase().includes(term);
+      const matchesFilter = status === 'ALL' || r.statut === status;
       return matchesSearch && matchesFilter;
     });
   });
@@ -59,5 +63,23 @@ export class AdminRapportsCorrections implements OnInit {
     if (taux < 15) return '#10b981';
     if (taux < 30) return '#f59e0b';
     return '#ef4444';
+  }
+
+  onSearch(event: any) {
+    this.searchTerm.set(event.target.value);
+  }
+
+  onFilter(event: any) {
+    this.filterStatut.set(event.target.value);
+  }
+
+  download(id: number) {
+    this.rapportService.download(id).subscribe(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rapport_${id}.pdf`;
+      a.click();
+    });
   }
 }

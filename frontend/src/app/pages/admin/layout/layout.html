@@ -1,9 +1,10 @@
 <div class="app-shell" [class.sidebar-collapsed]="!sidebarOpen()">
 
+  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <span class="brand-icon">PD</span>
-      <span class="brand-text">P-DETECT</span>
+      <span class="brand-icon">🎓</span>
+      <span class="brand-text">IBAM</span>
     </div>
 
     <div class="sidebar-user">
@@ -18,23 +19,26 @@
       <span class="nav-section-label">ADMINISTRATION</span>
       @for (item of menu; track item.path) {
         <a [routerLink]="item.path" routerLinkActive="active" class="nav-item">
-          <span class="material-icons nav-icon">{{ item.icon }}</span>
+          <span class="nav-icon">{{ item.icon }}</span>
           <span class="nav-label">{{ item.label }}</span>
         </a>
       }
     </nav>
 
     <button class="sidebar-logout" (click)="logout()">
-      <span class="material-icons">logout</span>
+      <span>⎋</span>
       <span>Déconnexion</span>
     </button>
   </aside>
 
+  <!-- Main Area -->
   <div class="main-area">
     <header class="topbar">
-      <button class="toggle-btn" (click)="toggleSidebar()">menu</button>
+      <button class="toggle-btn" (click)="toggleSidebar()" title="Réduire le menu">
+        ☰
+      </button>
       <div class="topbar-center">
-        <span class="topbar-title">Espace Directeur Adjoint</span>
+        <span class="topbar-title">Espace Direction</span>
       </div>
       <div class="topbar-right">
         <span class="topbar-user">{{ user.name }}</span>

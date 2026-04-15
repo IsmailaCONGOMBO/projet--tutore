@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { RapportService, Rapport } from '../../../core/services/rapport.service';
 import { NoteService } from '../../../core/services/note.service';
 
@@ -15,6 +15,7 @@ import { NoteService } from '../../../core/services/note.service';
 export class EnseignantRapportsAssignes implements OnInit {
   private rapportService = inject(RapportService);
   private noteService = inject(NoteService);
+  private router = inject(Router);
 
   rapports = signal<Rapport[]>([]);
   loading = signal(true);
@@ -75,5 +76,13 @@ export class EnseignantRapportsAssignes implements OnInit {
 
   getStatusLabel(s: string): string {
     return s.replace('_', ' ');
+  }
+
+  voirPlagiat(id: number) {
+    this.router.navigate(['/enseignant/plagiat', id]);
+  }
+
+  noter(id: number) {
+    this.router.navigate(['/enseignant/notes'], { queryParams: { rapportId: id } });
   }
 }

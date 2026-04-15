@@ -31,12 +31,22 @@ export class ChefRapports implements OnInit {
     this.rapportSvc.getListTous().subscribe(data => {
       this.rapports.set(data);
       this.loading.set(false);
+      
+      // Rafraîchir les données du rapport sélectionné si nécessaire
+      const current = this.selectedRapport();
+      if (current) {
+        const updated = data.find(r => r.id === current.id);
+        if (updated) this.selectedRapport.set(updated);
+      }
     });
     this.userSvc.getEnseignants().subscribe(data => this.enseignants.set(data));
   }
 
   analyser(id: number) {
-    this.rapportSvc.analyserRapport(id).subscribe(() => this.chargerDonnees());
+    this.rapportSvc.analyserRapport(id).subscribe(res => {
+      // On recharge tout mais on met à jour immédiatement le statut pour débloquer l'UI
+      this.chargerDonnees();
+    });
   }
 
   affecter() {
@@ -54,6 +64,6 @@ export class ChefRapports implements OnInit {
 
   selectRapport(r: Rapport) {
     this.selectedRapport.set(r);
-    this.selectedEnseignantId = r.enseignant?.user?.id || 0;
+    this.selectedEnseignantId = r.enseignant_id || 0;
   }
 }

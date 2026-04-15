@@ -26,7 +26,7 @@ export class RapportService {
 
   // Étudiant
   testerRapport(formData: FormData): Observable<any> {
-    return this.http.post(`${this.api}/test`, formData);
+    return this.http.post(`${this.api}/tester`, formData);
   }
 
   soumettreRapport(formData: FormData): Observable<any> {

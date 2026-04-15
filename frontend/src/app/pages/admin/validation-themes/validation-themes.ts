@@ -19,6 +19,7 @@ export class AdminValidationThemes implements OnInit {
   
   showRejectModal = signal(false);
   motifRejet = '';
+  processingAction = signal(false);
   message = signal<{ type: 'success' | 'error', text: string } | null>(null);
 
   ngOnInit() {
@@ -36,17 +37,31 @@ export class AdminValidationThemes implements OnInit {
     });
   }
 
+  valider(t: Theme) {
+    this.validerFinal(t);
+  }
+
+  rejeter(t: Theme) {
+    // Si on veut garder la logique de modal
+    this.ouvrirRejet(t);
+    // Ou si on veut un rejet rapide (pour le style premium sans modal complexe pour l'instant)
+    // Pour l'instant on garde ouvrirRejet pour la sécurité
+  }
+
   validerFinal(t: Theme) {
     if (!confirm('Voulez-vous accorder la validation finale à ce thème ?')) return;
     
+    this.processingAction.set(true);
     this.svc.validerAdmin(t.id).subscribe({
       next: (res) => {
         this.message.set({ type: 'success', text: res.message });
         this.chargerThemes();
         this.selectedTheme.set(null);
+        this.processingAction.set(false);
       },
       error: (e) => {
         this.message.set({ type: 'error', text: e.error?.message || 'Erreur lors de la validation.' });
+        this.processingAction.set(false);
       }
     });
   }

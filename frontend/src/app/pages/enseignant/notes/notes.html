@@ -1,59 +1,64 @@
-<div class="page-header">
-  <div class="header-content">
-    <h1 class="page-title">Attribution de Note</h1>
-    <p class="page-subtitle">Sélectionnez un rapport pour lui attribuer une note et un commentaire.</p>
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Attribution de Note</h1>
+      <p>Évaluez le travail déposé par l'étudiant après lecture attentive.</p>
+    </div>
+  </header>
+
+  <div class="form-card">
+    <div class="help-text">
+       Veuillez saisir une note entre 0 et 20 et justifier votre évaluation par un commentaire détaillé.
+    </div>
+
+    @if (message()) {
+      <div [class]="'alert-' + message()?.type">
+        {{ message()?.text }}
+      </div>
+    }
+
+    <form [formGroup]="noteForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label>Choisir le rapport <span class="req">*</span></label>
+        <select formControlName="rapport_id">
+          <option value="">Sélectionnez un rapport...</option>
+          @for (r of rapports(); track r.id) {
+            <option [value]="r.id">{{ r.titre }} ({{ r.etudiant?.user?.name }})</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Note sur 20 <span class="req">*</span></label>
+        <input 
+          type="number" 
+          formControlName="note"
+          min="0" 
+          max="20" 
+          step="0.5" 
+          placeholder="15.5"
+        >
+      </div>
+
+      <div class="form-group">
+        <label>Commentaire & Justification <span class="req">*</span></label>
+        <textarea 
+          formControlName="commentaire"
+          rows="6" 
+          placeholder="Détaillez les points forts et les points à améliorer..."
+        ></textarea>
+        <span class="optional">Ce commentaire sera visible par l'étudiant et l'administration.</span>
+      </div>
+
+      <div class="form-footer">
+        <button 
+          type="submit"
+          class="btn-submit" 
+          [disabled]="submitting() || noteForm.invalid"
+        >
+          {{ submitting() ? 'Envoi...' : 'Enregistrer la note' }}
+        </button>
+      </div>
+    </form>
   </div>
-</div>
-
-<div class="form-container">
-  @if (message()) {
-    <div class="alert" [ngClass]="'alert-' + message()?.type">
-      {{ message()?.text }}
-      <button class="close-alert" (click)="message.set(null)">×</button>
-    </div>
-  }
-
-  <form [formGroup]="noteForm" (ngSubmit)="onSubmit()" class="modern-form">
-    
-    <div class="form-group">
-      <label for="rapport_id">Rapport à noter</label>
-      <select id="rapport_id" formControlName="rapport_id" class="form-control">
-        <option value="" disabled selected>Choisir un rapport...</option>
-        @for (rapport of rapports(); track rapport.id) {
-          <option [value]="rapport.id">{{ rapport.titre }} ({{ rapport.etudiant }})</option>
-        }
-      </select>
-      @if (noteForm.get('rapport_id')?.touched && noteForm.get('rapport_id')?.invalid) {
-        <span class="error-msg">Veuillez sélectionner un rapport.</span>
-      }
-    </div>
-
-    <div class="form-group">
-      <label for="note">Note (0 - 20)</label>
-      <input type="number" id="note" formControlName="note" class="form-control" placeholder="Ex: 15.5">
-      @if (noteForm.get('note')?.touched && noteForm.get('note')?.invalid) {
-        <span class="error-msg">La note doit être comprise entre 0 et 20.</span>
-      }
-    </div>
-
-    <div class="form-group">
-      <label for="commentaire">Commentaire & Observations</label>
-      <textarea id="commentaire" formControlName="commentaire" rows="5" class="form-control" placeholder="Saisissez vos remarques ici..."></textarea>
-      @if (noteForm.get('commentaire')?.touched && noteForm.get('commentaire')?.invalid) {
-        <span class="error-msg">Le commentaire doit contenir au moins 10 caractères.</span>
-      }
-    </div>
-
-    <div class="form-actions">
-      <button type="submit" [disabled]="noteForm.invalid || submitting()" class="btn-submit">
-        @if (submitting()) {
-          <span class="btn-spinner"></span>
-          Envoi en cours...
-        } @else {
-          Soumettre la Note
-        }
-      </button>
-    </div>
-
-  </form>
 </div>

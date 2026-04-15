@@ -54,8 +54,11 @@ class TFIDFService implements TFIDFServiceInterface
     public function computeIDF(string $term, array $corpus): float
     {
         $totalDocuments = count($corpus);
-        $documentFrequency = 0;
+        if ($totalDocuments === 0) {
+            return 0.0;
+        }
 
+        $documentFrequency = 0;
         foreach ($corpus as $document) {
             if (in_array($term, $document)) {
                 $documentFrequency++;
@@ -63,6 +66,7 @@ class TFIDFService implements TFIDFServiceInterface
         }
 
         // IDF = log(N / (1 + df))
+        // On évite log(0)
         return log($totalDocuments / (1 + $documentFrequency));
     }
 
@@ -98,8 +102,9 @@ class TFIDFService implements TFIDFServiceInterface
         // Supposons que nous avons une table chapitres avec une relation rapport
         // et qu'on ne prend que les rapports au statut 'accepté'.
         // Si la relation ou la structure exacte diffère, il faudra ajuster.
+        // On ne prend que les rapports au statut 'ARCHIVE', 'NOTE' ou 'ANALYSE' pour la base de comparaison
         $chapitres = Chapitre::whereHas('rapport', function ($query) {
-            $query->where('status', 'accepté'); // ou la valeur appropriée
+            $query->whereIn('statut', ['ARCHIVE', 'NOTE', 'ANALYSE']);
         })->get();
 
         foreach ($chapitres as $chapitre) {

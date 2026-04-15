@@ -20,7 +20,7 @@ export class AnalyseService {
   private api = 'http://localhost:8000/api';
 
   getResultat(rapportId: number) {
-    return this.http.get<AnalysePlagiat>(`${this.api}/rapports/${rapportId}/analyse`);
+    return this.http.get<AnalysePlagiat>(`${this.api}/rapports/${rapportId}/analyse-resultat`);
   }
 
   getDernier() {

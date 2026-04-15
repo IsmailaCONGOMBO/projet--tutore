@@ -71,7 +71,9 @@
               <select [(ngModel)]="selectedEnseignantId">
                 <option [value]="0">-- Choisir un enseignant --</option>
                 @for (e of enseignants(); track e.id) {
-                  <option [value]="e.id">{{ e.name }}</option>
+                  @if (e.enseignant) {
+                    <option [value]="e.enseignant.id">{{ e.name }}</option>
+                  }
                 }
               </select>
               <button class="btn-action secondary" (click)="affecter()" [disabled]="!selectedEnseignantId">

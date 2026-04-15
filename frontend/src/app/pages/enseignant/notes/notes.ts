@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { RapportService, Rapport } from '../../../core/services/rapport.service';
 import { NoteService } from '../../../core/services/note.service';
 
@@ -15,6 +16,7 @@ export class EnseignantNotes implements OnInit {
   private fb = inject(FormBuilder);
   private rapportService = inject(RapportService);
   private noteService = inject(NoteService);
+  private route = inject(ActivatedRoute);
 
   noteForm: FormGroup;
   rapports = signal<Rapport[]>([]);
@@ -33,7 +35,13 @@ export class EnseignantNotes implements OnInit {
     this.rapportService.getAssignes().subscribe(data => {
       // On filtre les rapports qui ne sont pas encore notés pour le formulaire
       // ou ceux dont la note a été rejetée
-      this.rapports.set(data.filter((r: Rapport) => r.statut === 'ASSIGNE_ENSEIGNANT' || r.statut === 'NOTE_REJETEE_ADMIN'));
+      this.rapports.set(data.filter((r: Rapport) => r.statut === 'ASSIGNE_ENSEIGNANT' || r.statut === 'NOTE_REJETEE_ADMIN' || r.statut === 'ASSIGNE'));
+      
+      // Pré-remplissage si rapportId est dans l'URL
+      const rid = this.route.snapshot.queryParamMap.get('rapportId');
+      if (rid) {
+        this.noteForm.patchValue({ rapport_id: rid });
+      }
     });
   }
 

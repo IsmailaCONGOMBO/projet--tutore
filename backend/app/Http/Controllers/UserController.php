@@ -8,13 +8,22 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(
-            User::select('id', 'name', 'email', 'role', 'created_at')
-                ->orderBy('created_at', 'desc')
-                ->get()
-        );
+        $query = User::query();
+
+        if ($request->has('role')) {
+            $query->where('role', $request->role);
+        }
+
+        // Si on demande les enseignants, on charge le profil enseignant pour avoir son ID (table enseignants)
+        if ($request->role === 'enseignant') {
+            $query->with('enseignant');
+        } elseif ($request->role === 'etudiant') {
+            $query->with('etudiant');
+        }
+
+        return response()->json($query->orderBy('created_at', 'desc')->get());
     }
 
     public function store(Request $request)

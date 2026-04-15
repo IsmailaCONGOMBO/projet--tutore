@@ -1,13 +1,16 @@
-<div class="admin-validation">
-  <div class="header">
-    <h1>Contrôle Qualité des Corrections</h1>
-    <p>Validez ou rejetez les notes et commentaires soumis par les enseignants.</p>
-  </div>
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Contrôle Qualité des Corrections</h1>
+      <p>Validez ou rejetez les notes et commentaires soumis par les enseignants.</p>
+    </div>
+  </header>
 
   <div class="main-layout">
+    <!-- Liste des rapports -->
     <div class="list-section">
       <div class="table-card">
-        <table class="modern-table">
+        <table>
           <thead>
             <tr>
               <th>Rapport</th>
@@ -19,55 +22,73 @@
           </thead>
           <tbody>
             @for (r of rapports(); track r.id) {
-              <tr [class.selected]="selectedRapport()?.id === r.id" (click)="selectedRapport.set(r)">
-                <td>{{ r.titre }}</td>
+              <tr [class.active]="selectedRapport()?.id === r.id" (click)="selectedRapport.set(r)">
+                <td class="td-main">{{ r.titre }}</td>
                 <td>{{ r.etudiant?.user?.name }}</td>
-                <td>{{ r.enseignant?.user?.name }}</td>
-                <td class="bold">{{ r.note }}/20</td>
-                <td><span class="material-icons">preview</span></td>
+                <td class="td-date">{{ r.enseignant?.user?.name }}</td>
+                <td class="td-main">{{ r.note }}/20</td>
+                <td><span class="badge badge-EN_ATTENTE">Vérifier</span></td>
               </tr>
             } @empty {
-              <tr><td colspan="5" class="empty">Aucune note en attente de validation.</td></tr>
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">
+                    <span>📋</span>
+                    Aucune note en attente de validation.
+                  </div>
+                </td>
+              </tr>
             }
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- Panneau de revue -->
-    <div class="review-panel">
+    <!-- Panneau de revue (fixe au scroll via admin-shared.css) -->
+    <aside class="review-panel">
       @if (selectedRapport(); as r) {
         <div class="review-card">
           <h3>Détail de la correction</h3>
+
           <div class="info-row">
-            <strong>Rapport :</strong> <span>{{ r.titre }}</span>
-            <button class="btn-micro" (click)="download(r.id)">PDF</button>
+            <strong>Rapport</strong>
+            <span>{{ r.titre }}</span>
           </div>
+
           <div class="info-row">
-            <strong>Correcteur :</strong> <span>{{ r.enseignant?.user?.name }}</span>
+            <strong>Fichier</strong>
+            <button class="btn-micro" (click)="download(r.id)">Télécharger PDF</button>
           </div>
+
+          <div class="info-row">
+            <strong>Correcteur</strong>
+            <span>{{ r.enseignant?.user?.name }}</span>
+          </div>
+
           <div class="score-box">
             <span class="label">Note attribuée</span>
             <span class="value">{{ r.note }}/20</span>
           </div>
 
           <div class="comment-box">
-            <strong>Commentaire de l'enseignant :</strong>
-            <p>{{ r.commentaire }}</p>
+            <strong>Commentaire de l'enseignant</strong>
+            <p>{{ r.commentaire || 'Aucun commentaire fourni.' }}</p>
           </div>
 
           <div class="actions">
             <button class="btn-validate" (click)="valider(r)" [disabled]="processingAction()">
-              Valider la note
+              {{ processingAction() ? 'Traitement...' : 'Valider la note' }}
             </button>
             <button class="btn-reject" (click)="rejeter(r)" [disabled]="processingAction()">
-              Demander une révision
+              {{ processingAction() ? 'Traitement...' : 'Demander une révision' }}
             </button>
           </div>
         </div>
       } @else {
-        <div class="select-hint">Sélectionnez une ligne pour consulter les détails.</div>
+        <div class="select-hint">
+          <p>Sélectionnez une ligne pour consulter les détails de la correction.</p>
+        </div>
       }
-    </div>
+    </aside>
   </div>
 </div>

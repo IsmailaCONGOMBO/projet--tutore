@@ -35,6 +35,11 @@
               @if (res.taux > 20) { ⚠️ Ce taux est trop élevé. Veuillez corriger avant soumission. }
               @else { ✅ Ce taux est acceptable pour la soumission officielle. }
             </p>
+
+            <button class="btn-details" (click)="showTestDetails.set(true)">
+              <span class="material-icons">description</span>
+              Voir le rapport complet
+            </button>
           </div>
         }
       </div>
@@ -123,4 +128,22 @@
     </div>
   </div>
 
+  <!-- MODAL DE DÉTAILS -->
+  @if (showTestDetails()) {
+    <div class="modal-overlay" (click)="showTestDetails.set(false)">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Rapport d'Auto-contrôle Détaillé</h2>
+          <button class="close-btn" (click)="showTestDetails.set(false)">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <div class="modal-body report-container" [innerHTML]="testReportHtml()">
+        </div>
+        <div class="modal-footer">
+          <button class="btn-close-final" (click)="showTestDetails.set(false)">Fermer</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

@@ -17,14 +17,14 @@ export class AdminLayout {
   sidebarOpen = signal(true);
 
   menu = [
-    { path: '/admin/dashboard', icon: 'dashboard', label: 'Tableau de bord' },
-    { path: '/admin/utilisateurs', icon: 'people', label: 'Utilisateurs' },
-    { path: '/admin/validation-themes', icon: 'auto_stories', label: 'Validation des thèmes' },
-    { path: '/admin/validation-notes', icon: 'fact_check', label: 'Validation des notes' },
-    { path: '/admin/rapports-corrections', icon: 'library_books', label: 'Rapports & Corrections' },
-    { path: '/admin/notifications', icon: 'notifications', label: 'Notifications' },
-    { path: '/admin/statistiques', icon: 'analytics', label: 'Statistiques' },
-    { path: '/admin/parametres', icon: 'settings', label: 'Configuration' },
+    { path: '/admin/dashboard', icon: '📊', label: 'Tableau de bord' },
+    { path: '/admin/utilisateurs', icon: '👥', label: 'Utilisateurs' },
+    { path: '/admin/validation-themes', icon: '📝', label: 'Validation des thèmes' },
+    { path: '/admin/validation-notes', icon: '✅', label: 'Validation des notes' },
+    { path: '/admin/rapports-corrections', icon: '📚', label: 'Rapports & Corrections' },
+    { path: '/admin/notifications', icon: '🔔', label: 'Notifications' },
+    { path: '/admin/statistiques', icon: '📈', label: 'Statistiques' },
+    { path: '/admin/parametres', icon: '⚙️', label: 'Configuration' },
   ];
 
   toggleSidebar() {

@@ -60,6 +60,18 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
         Log::info("PlagiatAnalyzerService: Construction du corpus depuis la base de données.");
         $corpus = $this->tfidf->buildCorpusFromDatabase();
         
+        // Si le corpus est vide, on arrête ici (taux de plagiat 0%)
+        if (empty($corpus)) {
+            Log::info("PlagiatAnalyzerService: Corpus vide. Taux de plagiat 0% par défaut.");
+            return [
+                'taux_global' => 0.0,
+                'decision' => 'accepte',
+                'segments' => [],
+                'is_test' => $isTest,
+                'analyzed_at' => now()->format('Y-m-d H:i:s')
+            ];
+        }
+
         // Extraire les tokens de chaque doc du corpus pour TFIDF
         $corpusTokensList = array_column($corpus, 'tokens');
 

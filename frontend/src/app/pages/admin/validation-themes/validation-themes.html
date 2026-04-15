@@ -1,107 +1,44 @@
-<div class="admin-themes-container">
-  <div class="page-header">
-    <div class="header-text">
-      <h1>Validation Finale des Thèmes</h1>
-      <p>Approbation définitive des sujets de rapport validés au préalable par les chefs de département.</p>
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Validation des Thèmes</h1>
+      <p>Examinez et approuvez les sujets de projets tutorés proposés par les étudiants.</p>
     </div>
-  </div>
+  </header>
 
-  @if (message()) {
-    <div [class]="'alert alert-' + message()?.type">
-      {{ message()?.text }}
-      <button class="close-btn" (click)="message.set(null)">×</button>
+  @if (loading()) {
+    <div class="loading-state">Chargement des propositions...</div>
+  } @else if (themes().length === 0) {
+    <div class="empty-state" style="padding: 5rem;">
+      <span>📝</span>
+      Aucun thème en attente de validation.
     </div>
-  }
-
-  <div class="main-content">
-    <div class="themes-list-block">
-      @if (loading()) { <div class="loader">Chargement des thèmes...</div> }
-      
-      <div class="themes-grid">
-        @for (t of themes(); track t.id) {
-          <div class="theme-card" [class.selected]="selectedTheme()?.id === t.id" (click)="selectedTheme.set(t)">
-            <div class="card-top">
-              <span class="etudiant-name">{{ t.etudiant?.user?.name }}</span>
-              <span class="chef-status">Validé par : {{ t.chef?.name || 'Chef' }}</span>
-            </div>
-            <h3 class="theme-title">{{ t.titre }}</h3>
-            <div class="card-footer">
-              <span class="date">Reçu le {{ t.date_validation_chef | date:'dd/MM/yyyy' }}</span>
-              <span class="material-icons">chevron_right</span>
-            </div>
-          </div>
-        } @empty {
-          <div class="empty-msg">
-            <span class="material-icons">info_outline</span>
-            <p>Il n'y a actuellement aucun thème en attente de validation finale.</p>
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- Panneau de détails -->
-    <div class="details-panel">
-      @if (selectedTheme(); as t) {
-        <div class="details-content">
-          <h2>Analyse du thème</h2>
+  } @else {
+    <div class="themes-grid">
+      @for (t of themes(); track t.id) {
+        <div class="theme-card">
+          <h3>{{ t.titre }}</h3>
           
-          <div class="info-group">
-            <label>Étudiant</label>
-            <div class="val">{{ t.etudiant?.user?.name }}</div>
-          </div>
-
-          <div class="info-group">
-            <label>Sujet proposé</label>
-            <div class="val emphasized">{{ t.titre }}</div>
-          </div>
-
-          <div class="info-group">
-            <label>Description exhaustive</label>
-            <p class="desc">{{ t.description }}</p>
-          </div>
-
-          <div class="validation-history">
-            <div class="history-item">
-              <span class="material-icons checked">check_circle</span>
-              <div>
-                <strong>Validation Chef</strong>
-                <p>Le {{ t.date_validation_chef | date:'dd/MM/yyyy à HH:mm' }}</p>
-              </div>
+          <div class="theme-student">
+            <div class="student-avatar">
+              {{ (t.etudiant?.user?.name || 'S').charAt(0).toUpperCase() }}
+            </div>
+            <div class="student-info">
+              <span class="student-name">{{ t.etudiant?.user?.name }}</span>
+              <span class="student-filiere">Étudiant</span>
             </div>
           </div>
 
-          <div class="action-buttons">
-            <button class="btn-approve" (click)='validerFinal(t)'>
-              <span class="material-icons">done_all</span>
-              Valider Définitivement
+          <div class="theme-actions">
+            <button class="btn-approve" (click)="valider(t)" [disabled]="processingAction()">
+              {{ processingAction() ? '...' : 'Approuver' }}
             </button>
-            <button class="btn-reject" (click)="ouvrirRejet(t)">
-              <span class="material-icons">cancel</span>
-              Rejeter
+            <button class="btn-reject-theme" (click)="rejeter(t)" [disabled]="processingAction()">
+              {{ processingAction() ? '...' : 'Rejeter' }}
             </button>
           </div>
-        </div>
-      } @else {
-        <div class="placeholder">
-          <span class="material-icons">article</span>
-          <p>Sélectionnez un thème pour consulter les détails et procéder à la validation finale.</p>
         </div>
       }
-    </div>
-  </div>
-
-  <!-- Rejection Modal -->
-  @if (showRejectModal()) {
-    <div class="modal-overlay">
-      <div class="modal">
-        <h3>Rejet définitif du thème</h3>
-        <p>Veuillez justifier le rejet de ce thème. L'étudiant sera immédiatement notifié.</p>
-        <textarea [(ngModel)]="motifRejet" placeholder="Saisissez ici le motif du rejet..."></textarea>
-        <div class="modal-btns">
-          <button class="btn-secondary" (click)="showRejectModal.set(false)">Annuler</button>
-          <button class="btn-danger" (click)="confirmerRejet()" [disabled]="!motifRejet.trim()">Confirmer le Rejet</button>
-        </div>
-      </div>
     </div>
   }
 </div>

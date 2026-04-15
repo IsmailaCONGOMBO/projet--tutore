@@ -27,6 +27,8 @@ export class EtudiantRapport implements OnInit {
   // Mode Test (Volatile)
   testFile: File | null = null;
   testResult = signal<{ taux: number; status: string } | null>(null);
+  testReportHtml = signal('');
+  showTestDetails = signal(false);
   testing = signal(false);
 
   message = signal<{ type: 'success' | 'error', text: string } | null>(null);
@@ -61,7 +63,11 @@ export class EtudiantRapport implements OnInit {
 
     this.rapportSvc.testerRapport(fd).subscribe({
       next: (res) => {
-        this.testResult.set({ taux: res.taux_plagiat, status: res.statut_previsionnel });
+        this.testResult.set({ 
+          taux: res.result.taux_global, 
+          status: res.result.decision 
+        });
+        this.testReportHtml.set(res.html_report);
         this.testing.set(false);
       },
       error: () => this.testing.set(false)
