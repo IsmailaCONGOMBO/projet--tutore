@@ -3,7 +3,7 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <span class="brand-icon">🎓</span>
+      <span class="brand-icon material-icons">school</span>
       <span class="brand-text">IBAM</span>
     </div>
 
@@ -23,14 +23,14 @@
           routerLinkActive="active"
           class="nav-item"
         >
-          <span class="nav-icon">{{ item.icon }}</span>
+          <span class="nav-icon material-icons">{{ item.icon }}</span>
           <span class="nav-label">{{ item.label }}</span>
         </a>
       }
     </nav>
 
     <button class="sidebar-logout" (click)="logout()">
-      <span>⎋</span>
+      <span class="material-icons">logout</span>
       <span>Déconnexion</span>
     </button>
   </aside>
@@ -40,7 +40,7 @@
     <!-- Topbar -->
     <header class="topbar">
       <button class="toggle-btn" (click)="toggleSidebar()" title="Réduire le menu">
-        ☰
+        <span class="material-icons">menu</span>
       </button>
       <div class="topbar-right">
         <span class="topbar-user">{{ user.name || user.email }}</span>

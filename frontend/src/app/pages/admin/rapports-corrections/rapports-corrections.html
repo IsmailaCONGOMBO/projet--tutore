@@ -77,8 +77,8 @@
                 </span>
               </td>
               <td>
-                <button class="btn-mark-all" style="padding: 0.3rem 0.6rem;" (click)="download(r.id)">
-                  📁 PDF
+                <button class="btn-mark-all" style="padding: 0.3rem 0.6rem; display: flex; align-items: center; gap: 4px;" (click)="download(r.id)">
+                  <span class="material-icons" style="font-size: 1.1rem;">download</span> PDF
                 </button>
               </td>
             </tr>
@@ -86,7 +86,7 @@
             <tr>
               <td colspan="7">
                 <div class="empty-state">
-                  <span>📂</span>
+                  <span class="material-icons" style="font-size: 3rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;">folder_open</span>
                   Aucun rapport trouvé.
                 </div>
               </td>

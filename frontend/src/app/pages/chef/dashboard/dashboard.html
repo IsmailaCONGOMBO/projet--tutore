@@ -1,7 +1,7 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <h1>Bonjour, <span>{{ user.name || 'Chef de Département' }}</span> 👋</h1>
+      <h1>Bonjour, <span>{{ user.name || 'Chef de Département' }}</span></h1>
       <p>Tableau de bord — Gestion des thèmes de stage</p>
     </div>
   </div>
@@ -9,28 +9,28 @@
   <!-- Stats -->
   <div class="stats-grid">
     <div class="stat-card orange">
-      <div class="stat-icon orange">⏳</div>
+      <div class="stat-icon orange material-icons">history</div>
       <div class="stat-body">
         <span class="stat-value">{{ stats().en_attente }}</span>
         <span class="stat-label">En attente</span>
       </div>
     </div>
     <div class="stat-card green">
-      <div class="stat-icon green">✅</div>
+      <div class="stat-icon green material-icons">check_circle</div>
       <div class="stat-body">
         <span class="stat-value">{{ stats().valides }}</span>
         <span class="stat-label">Validés</span>
       </div>
     </div>
     <div class="stat-card red">
-      <div class="stat-icon red">❌</div>
+      <div class="stat-icon red material-icons">cancel</div>
       <div class="stat-body">
         <span class="stat-value">{{ stats().rejetes }}</span>
         <span class="stat-label">Rejetés</span>
       </div>
     </div>
     <div class="stat-card blue">
-      <div class="stat-icon blue">📊</div>
+      <div class="stat-icon blue material-icons">analytics</div>
       <div class="stat-body">
         <span class="stat-value">{{ stats().total }}</span>
         <span class="stat-label">Total soumis</span>
@@ -42,20 +42,20 @@
   <div class="section-title">Actions rapides</div>
   <div class="shortcuts-grid">
     <a routerLink="../themes" class="shortcut-card shortcut-orange">
-      <span class="shortcut-icon">💡</span>
+      <span class="shortcut-icon material-icons">lightbulb</span>
       <span class="shortcut-label">Traiter les thèmes en attente</span>
       <span class="shortcut-badge">{{ stats().en_attente }}</span>
     </a>
     <a routerLink="../rapports" class="shortcut-card shortcut-purple">
-      <span class="shortcut-icon">📄</span>
+      <span class="shortcut-icon material-icons">description</span>
       <span class="shortcut-label">Analyser les rapports</span>
     </a>
     <a routerLink="../unicite" class="shortcut-card shortcut-blue">
-      <span class="shortcut-icon">🔎</span>
+      <span class="shortcut-icon material-icons">find_in_page</span>
       <span class="shortcut-label">Vérifier l'unicité d'un thème</span>
     </a>
     <a routerLink="../historique" class="shortcut-card shortcut-green">
-      <span class="shortcut-icon">📋</span>
+      <span class="shortcut-icon material-icons">assignment</span>
       <span class="shortcut-label">Consulter l'historique</span>
     </a>
   </div>

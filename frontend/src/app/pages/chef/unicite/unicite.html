@@ -7,7 +7,7 @@
   </div>
 
   <div class="form-card">
-    @if (error()) { <div class="alert-error">⚠️ {{ error() }}</div> }
+    @if (error()) { <div class="alert-error"><span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">warning</span> {{ error() }}</div> }
 
     <div class="search-bar">
       <input
@@ -17,7 +17,7 @@
         (keyup.enter)="rechercher()"
       />
       <button class="btn-search" (click)="rechercher()" [disabled]="loading()">
-        {{ loading() ? 'Recherche…' : '🔎 Vérifier' }}
+        {{ loading() ? 'Recherche…' : 'Vérifier' }}
       </button>
     </div>
 
@@ -25,11 +25,11 @@
     @if (resultats() !== null) {
       @if (resultats()!.length === 0) {
         <div class="result-unique">
-          ✅ Aucun thème similaire trouvé. Ce thème semble <strong>unique</strong>.
+          <span class="material-icons" style="color: #22c55e; vertical-align: middle;">check_circle</span> Aucun thème similaire trouvé. Ce thème semble <strong>unique</strong>.
         </div>
       } @else {
         <div class="alert-warn">
-          ⚠️ <strong>{{ resultats()!.length }} thème(s) similaire(s)</strong> trouvé(s) dans la base :
+          <span class="material-icons" style="color: #f59e0b; vertical-align: middle;">warning</span> <strong>{{ resultats()!.length }} thème(s) similaire(s)</strong> trouvé(s) dans la base :
         </div>
         <div class="similaires-list">
           @for (t of resultats()!; track t.id) {

@@ -1,4 +1,4 @@
-/* Styles partagés entre toutes les pages étudiant */
+/* Styles partagés entre tous les portails (Étudiant, Enseignant, Admin, Chef) */
 
 /* ── En-tête de page ─────────────────────────────────── */
 .page { max-width: 860px; }

@@ -1,14 +1,8 @@
 /* Réutilise le même layout que l'espace étudiant */
 @import '../../etudiant/layout/layout.css';
 
-/* Accent couleur spécifique enseignant : bleu royal */
-.sidebar { background: #0f172a; } /* Slate 900 */
-.user-avatar { background: #2563eb; } /* Blue 600 */
+/* Les couleurs sont maintenant héritées du layout étudiant (variables dans styles.css) */
 
-.nav-item.active {
-  background: #2563eb;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-}
 
 .topbar-center {
   flex: 1;

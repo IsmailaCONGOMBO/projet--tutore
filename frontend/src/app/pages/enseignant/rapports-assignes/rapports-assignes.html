@@ -10,7 +10,7 @@
     <div class="loading-state">Récupération de vos dossiers...</div>
   } @else if (rapports().length === 0) {
     <div class="empty-state" style="padding: 5rem;">
-      <span>📂</span>
+      <span class="material-icons" style="font-size: 3rem; color: var(--text-light); display: block; margin-bottom: 1rem;">folder_open</span>
       Aucun rapport ne vous est assigné pour le moment.
     </div>
   } @else {
@@ -54,7 +54,7 @@
               <td>
                 <div style="display: flex; gap: 0.5rem;">
                   <button class="btn-mark-all" (click)="voirPlagiat(r.id)" title="Détails Plagiat">
-                    🔍
+                    <span class="material-icons" style="font-size: 1.2rem;">find_in_page</span>
                   </button>
                   <button class="btn-submit" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" (click)="noter(r.id)">
                     Noter

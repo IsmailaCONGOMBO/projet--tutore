@@ -3,7 +3,7 @@
   <!-- Panneau gauche décoratif -->
   <div class="login-left">
     <div class="left-brand">
-      <span>🎓</span>
+      <span class="material-icons">school</span>
       <span>IBAM — Détection de Plagiat</span>
     </div>
 
@@ -40,14 +40,14 @@
       </div>
 
       @if (error()) {
-        <div class="alert-error">⚠️ {{ error() }}</div>
+        <div class="alert-error"><span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">warning</span> {{ error() }}</div>
       }
 
       <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
         <div class="form-group">
           <label for="email">Adresse email</label>
           <div class="input-wrap">
-            <span class="input-icon">✉</span>
+            <span class="input-icon material-icons">email</span>
             <input
               id="email"
               type="email"
@@ -63,7 +63,7 @@
         <div class="form-group">
           <label for="password">Mot de passe</label>
           <div class="input-wrap">
-            <span class="input-icon">🔒</span>
+            <span class="input-icon material-icons">lock</span>
             <input
               id="password"
               type="password"
@@ -82,7 +82,7 @@
       </form>
 
       <div class="login-footer">
-        <a routerLink="/">← Retour à l'accueil</a>
+        <a routerLink="/"><span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">arrow_back</span> Retour à l'accueil</a>
       </div>
     </div>
   </div>

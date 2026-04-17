@@ -12,10 +12,10 @@
       Tous ({{ tous().length }})
     </button>
     <button class="filter-tab" [class.active-valide]="filtre() === 'VALIDE'" (click)="setFiltre('VALIDE')">
-      ✅ Validés ({{ countStatut('VALIDE') }})
+      Validés ({{ countStatut('VALIDE') }})
     </button>
     <button class="filter-tab" [class.active-rejete]="filtre() === 'REJETE'" (click)="setFiltre('REJETE')">
-      ❌ Rejetés ({{ countStatut('REJETE') }})
+      Rejetés ({{ countStatut('REJETE') }})
     </button>
   </div>
 
@@ -24,7 +24,7 @@
       <div class="empty-state"><p>Chargement…</p></div>
     } @else if (filtres().length === 0) {
       <div class="empty-state">
-        <span>📋</span>
+        <span class="material-icons" style="font-size: 3rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;">assignment</span>
         <p>Aucune décision enregistrée.</p>
       </div>
     } @else {

@@ -8,7 +8,7 @@
   <div class="section-title">Thèmes soumis</div>
   <div class="table-card">
     @if (themes().length === 0) {
-      <div class="empty-state"><span>💡</span><p>Aucun thème soumis.</p></div>
+      <div class="empty-state"><span class="material-icons">lightbulb</span><p>Aucun thème soumis.</p></div>
     } @else {
       <table>
         <thead><tr><th>Titre</th><th>Statut</th><th>Date</th></tr></thead>
@@ -31,7 +31,7 @@
     @if (loading()) {
       <div class="empty-state"><p>Chargement…</p></div>
     } @else if (rapports().length === 0) {
-      <div class="empty-state"><span>📄</span><p>Aucun rapport déposé.</p></div>
+      <div class="empty-state"><span class="material-icons">description</span><p>Aucun rapport déposé.</p></div>
     } @else {
       <table>
         <thead><tr><th>Titre</th><th>Statut</th><th>Taux plagiat</th><th>Date</th></tr></thead>

@@ -3,7 +3,7 @@
   <!-- En-tête -->
   <div class="page-header">
     <div>
-      <h1>Bonjour, <span>{{ user.name || 'Étudiant' }}</span> 👋</h1>
+      <h1>Bonjour, <span>{{ user.name || 'Étudiant' }}</span></h1>
       <p>Voici un résumé de votre activité sur la plateforme.</p>
     </div>
   </div>
@@ -11,28 +11,28 @@
   <!-- Statistiques -->
   <div class="stats-grid">
     <div class="stat-card">
-      <div class="stat-icon blue">📄</div>
+      <div class="stat-icon blue material-icons">description</div>
       <div class="stat-body">
         <span class="stat-value">{{ nbRapports() }}</span>
         <span class="stat-label">Rapport(s) déposé(s)</span>
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon green">💡</div>
+      <div class="stat-icon green material-icons">lightbulb</div>
       <div class="stat-body">
         <span class="stat-value">{{ nbThemes() }}</span>
         <span class="stat-label">Thème(s) soumis</span>
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon orange">🔔</div>
+      <div class="stat-icon orange material-icons">notifications</div>
       <div class="stat-body">
         <span class="stat-value">{{ nbNotifs() }}</span>
         <span class="stat-label">Notification(s) non lue(s)</span>
       </div>
     </div>
     <div class="stat-card plagiat-card">
-      <div class="stat-icon purple">🔍</div>
+      <div class="stat-icon purple material-icons">find_in_page</div>
       <div class="stat-body">
         @if (dernierTaux() !== null) {
           <span class="stat-value" [style.color]="tauxColor">{{ dernierTaux() }}%</span>
@@ -62,9 +62,9 @@
   <div class="shortcuts-grid">
     @for (r of raccourcis; track r.path) {
       <a [routerLink]="r.path" class="shortcut-card shortcut-{{ r.color }}">
-        <span class="shortcut-icon">{{ r.icon }}</span>
+        <span class="shortcut-icon material-icons">{{ r.icon }}</span>
         <span class="shortcut-label">{{ r.label }}</span>
-        <span class="shortcut-arrow">→</span>
+        <span class="shortcut-arrow material-icons">chevron_right</span>
       </a>
     }
   </div>

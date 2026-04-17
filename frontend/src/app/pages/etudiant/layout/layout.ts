@@ -17,12 +17,12 @@ export class EtudiantLayout {
   logout()        { this.auth.logout(); }
 
   readonly menu = [
-    { path: 'dashboard',      label: 'Tableau de bord',   icon: '⊞' },
-    { path: 'theme',          label: 'Soumettre un thème', icon: '💡' },
-    { path: 'rapport',        label: 'Déposer un rapport', icon: '📤' },
-    { path: 'suivi',          label: 'Mes demandes',       icon: '📋' },
-    { path: 'plagiat',        label: 'Résultat plagiat',   icon: '🔍' },
-    { path: 'note',           label: 'Ma note',            icon: '🎯' },
-    { path: 'notifications',  label: 'Notifications',      icon: '🔔' },
+    { path: 'dashboard',      label: 'Tableau de bord',   icon: 'dashboard' },
+    { path: 'theme',          label: 'Soumettre un thème', icon: 'lightbulb' },
+    { path: 'rapport',        label: 'Déposer un rapport', icon: 'upload_file' },
+    { path: 'suivi',          label: 'Mes demandes',       icon: 'assignment' },
+    { path: 'plagiat',        label: 'Résultat plagiat',   icon: 'find_in_page' },
+    { path: 'note',           label: 'Ma note',            icon: 'stars' },
+    { path: 'notifications',  label: 'Notifications',      icon: 'notifications' },
   ];
 }

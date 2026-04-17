@@ -1,11 +1,10 @@
-@import '../etudiant/etudiant-shared.css';
+@import '../portal-shared.css';
 
 /* ── Surcharges spécifiques admin ────────────────────── */
 .page { max-width: 1200px; } /* L'admin a souvent besoin de plus de largeur pour les tableaux complexes */
 
-/* Accentuation violet pour les badges spécifiques ou boutons si besoin */
-.btn-submit { background: #6d28d9; }
-.btn-submit:hover:not(:disabled) { background: #5b21b6; }
+/* Les boutons utilisent maintenant les couleurs de portal-shared.css */
+
 
 /* Styles spécifiques pour le panneau de revue (validation notes) */
 .main-layout {

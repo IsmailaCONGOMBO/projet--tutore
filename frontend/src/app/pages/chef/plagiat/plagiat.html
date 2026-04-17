@@ -2,7 +2,7 @@
 
   <!-- Breadcrumb -->
   <div class="breadcrumb">
-    <a routerLink="/chef/rapports">← Rapports déposés</a>
+    <a routerLink="/chef/rapports"><span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">arrow_back</span> Rapports déposés</a>
     <span class="bc-sep">›</span>
     <span>Analyse plagiat</span>
   </div>
@@ -18,9 +18,9 @@
       </div>
       <!-- Badge statut actuel -->
       <span class="statut-badge statut-{{ analyse()!.statut_rapport }}">
-        {{ analyse()!.statut_rapport === 'EN_ATTENTE' ? '⏳ En attente de décision'
-           : analyse()!.statut_rapport === 'ACCEPTE'  ? '✅ Rapport accepté'
-           : '❌ Rapport rejeté' }}
+        {{ analyse()!.statut_rapport === 'EN_ATTENTE' ? 'En attente de décision'
+           : analyse()!.statut_rapport === 'ACCEPTE'  ? 'Rapport accepté'
+           : 'Rapport rejeté' }}
       </span>
     </div>
 
@@ -68,10 +68,10 @@
         @if (analyse()!.statut_rapport === 'EN_ATTENTE') {
           <div class="decision-btns">
             <button class="btn-accepter" (click)="ouvrirDecision('ACCEPTE')">
-              ✅ Accepter le rapport
+              <span class="material-icons" style="font-size: 1.2rem; vertical-align: middle;">check_circle</span> Accepter le rapport
             </button>
             <button class="btn-rejeter-rapport" (click)="ouvrirDecision('REJETE')">
-              ❌ Rejeter le rapport
+              <span class="material-icons" style="font-size: 1.2rem; vertical-align: middle;">cancel</span> Rejeter le rapport
             </button>
           </div>
         }
@@ -84,13 +84,13 @@
     </div>
 
     @if (analyse()!.passages_suspects.length === 0) {
-      <div class="no-passages">✓ Aucun passage suspect identifié.</div>
+      <div class="no-passages"><span class="material-icons" style="color: #22c55e; vertical-align: middle; margin-right: 0.5rem;">check_circle</span> Aucun passage suspect identifié.</div>
     } @else {
       <div class="passages-list">
         @for (p of analyse()!.passages_suspects; track p.source) {
           <div class="passage-card">
             <div class="passage-header">
-              <span class="passage-source">🔗 {{ p.source }}</span>
+              <span class="passage-source"><span class="material-icons" style="font-size: 1rem; vertical-align: middle;">link</span> {{ p.source }}</span>
               <span class="passage-sim"
                 [class.sim-warn]="p.similarite >= 20 && p.similarite < 40"
                 [class.sim-bad]="p.similarite >= 40">
@@ -105,11 +105,11 @@
 
   } @else {
     <div class="pending-state">
-      <span class="pending-icon">🔧</span>
+      <span class="pending-icon material-icons" style="font-size: 4rem; color: var(--text-light);">build</span>
       <h3>Analyse non disponible</h3>
       <p>L'algorithme de détection de plagiat sera intégré prochainement.<br>
          Une fois implémenté, les résultats s'afficheront ici automatiquement.</p>
-      <a routerLink="/chef/rapports" class="btn-retour">← Retour aux rapports</a>
+      <a routerLink="/chef/rapports" class="btn-retour"><span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">arrow_back</span> Retour aux rapports</a>
     </div>
   }
 </div>

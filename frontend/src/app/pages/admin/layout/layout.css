@@ -1,14 +1,8 @@
 /* Réutilise le même layout que l'espace étudiant */
 @import '../../etudiant/layout/layout.css';
 
-/* Accent couleur spécifique admin : indigo/violet */
-.sidebar { background: #1e1b4b; } /* Indigo très foncé */
-.user-avatar { background: #7c3aed; } /* Violet 600 */
+/* Les couleurs sont maintenant héritées du layout étudiant (variables dans styles.css) */
 
-.nav-item.active {
-  background: #7c3aed;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
-}
 
 .topbar-center {
   flex: 1;

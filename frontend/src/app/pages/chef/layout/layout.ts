@@ -17,10 +17,10 @@ export class ChefLayout {
   logout()        { this.auth.logout(); }
 
   readonly menu = [
-    { path: 'dashboard',  label: 'Tableau de bord',        icon: '⊞' },
-    { path: 'themes',     label: 'Thèmes soumis',           icon: '💡' },
-    { path: 'unicite',    label: 'Vérification d\'unicité', icon: '🔎' },
-    { path: 'rapports',   label: 'Rapports déposés',        icon: '📄' },
-    { path: 'historique', label: 'Historique décisions',    icon: '📋' },
+    { path: 'dashboard',  label: 'Tableau de bord',        icon: 'dashboard' },
+    { path: 'themes',     label: 'Thèmes soumis',           icon: 'lightbulb' },
+    { path: 'unicite',    label: 'Vérification d\'unicité', icon: 'find_in_page' },
+    { path: 'rapports',   label: 'Rapports déposés',        icon: 'description' },
+    { path: 'historique', label: 'Historique décisions',    icon: 'assignment' },
   ];
 }

@@ -32,8 +32,8 @@
               <div class="fill" [style.width.%]="res.taux"></div>
             </div>
             <p class="status-msg">
-              @if (res.taux > 20) { ⚠️ Ce taux est trop élevé. Veuillez corriger avant soumission. }
-              @else { ✅ Ce taux est acceptable pour la soumission officielle. }
+              @if (res.taux > 20) { <span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">warning</span> Ce taux est trop élevé. Veuillez corriger avant soumission. }
+              @else { <span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">check_circle</span> Ce taux est acceptable pour la soumission officielle. }
             </p>
 
             <button class="btn-details" (click)="showTestDetails.set(true)">

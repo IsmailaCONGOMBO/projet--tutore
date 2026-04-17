@@ -1,6 +1,6 @@
-@import '../admin-shared.css';
+@import '../../portal-shared.css';
 
-/* La plupart des styles sont déjà dans etudiant-shared.css (.notif-list, .notif-item, etc.) */
+/* La plupart des styles sont déjà dans portal-shared.css (.notif-list, .notif-item, etc.) */
 
 .page { max-width: 800px; }
 

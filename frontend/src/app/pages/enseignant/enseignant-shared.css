@@ -1,11 +1,10 @@
-@import '../etudiant/etudiant-shared.css';
+@import '../portal-shared.css';
 
 /* ── Surcharges spécifiques enseignant ────────────────── */
 .page { max-width: 1000px; }
 
-/* Accentuation bleu royal pour les boutons */
-.btn-submit { background: #2563eb; }
-.btn-submit:hover:not(:disabled) { background: #1d4ed8; }
+/* Les boutons utilisent maintenant les couleurs de portal-shared.css */
+
 
 /* Grid de dashboard enseignant */
 .stats-grid {

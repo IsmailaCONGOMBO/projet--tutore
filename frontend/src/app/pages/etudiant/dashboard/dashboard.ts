@@ -65,9 +65,9 @@ export class EtudiantDashboard implements OnInit {
   }
 
   readonly raccourcis = [
-    { path: '../theme',         label: 'Soumettre un thème',  icon: '💡', color: 'blue' },
-    { path: '../rapport',       label: 'Déposer un rapport',  icon: '📤', color: 'green' },
-    { path: '../suivi',         label: 'Voir mes demandes',   icon: '📋', color: 'orange' },
-    { path: '../notifications', label: 'Mes notifications',   icon: '🔔', color: 'purple' },
+    { path: '../theme',         label: 'Soumettre un thème',  icon: 'lightbulb', color: 'blue' },
+    { path: '../rapport',       label: 'Déposer un rapport',  icon: 'upload_file', color: 'green' },
+    { path: '../suivi',         label: 'Voir mes demandes',   icon: 'assignment', color: 'orange' },
+    { path: '../notifications', label: 'Mes notifications',   icon: 'notifications', color: 'purple' },
   ];
 }

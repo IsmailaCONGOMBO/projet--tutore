@@ -18,9 +18,9 @@ export class EnseignantLayout {
   logout()        { this.auth.logout(); }
 
   readonly menu = [
-    { path: 'dashboard',  label: 'Tableau de bord',        icon: '⊞' },
-    { path: 'rapports',   label: 'Rapports assignés',      icon: '📄' },
-    { path: 'archives',   label: 'Rapports archivés',      icon: '📋' },
-    { path: 'notes',      label: 'Attribution de notes',   icon: '⭐' },
+    { path: 'dashboard',  label: 'Tableau de bord',        icon: 'dashboard' },
+    { path: 'rapports',   label: 'Rapports assignés',      icon: 'description' },
+    { path: 'archives',   label: 'Rapports archivés',      icon: 'assignment' },
+    { path: 'notes',      label: 'Attribution de notes',   icon: 'grade' },
   ];
 }

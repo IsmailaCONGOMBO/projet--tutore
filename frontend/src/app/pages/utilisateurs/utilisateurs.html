@@ -3,7 +3,7 @@
   <!-- Navbar -->
   <nav class="dash-nav">
     <div class="nav-brand">
-      <span class="nav-icon">🎓</span>
+      <span class="nav-icon material-icons">school</span>
       <span>IBAM</span>
       <span class="nav-divider"></span>
       <span class="nav-subtitle">Administration</span>
@@ -34,10 +34,10 @@
 
     <!-- Alertes -->
     @if (success()) {
-      <div class="alert-success">✓ {{ success() }}</div>
+      <div class="alert-success"><span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">check_circle</span> {{ success() }}</div>
     }
     @if (error() && !showModal()) {
-      <div class="alert-error">⚠️ {{ error() }}</div>
+      <div class="alert-error"><span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">warning</span> {{ error() }}</div>
     }
 
     <!-- Tableau -->
@@ -46,7 +46,7 @@
         <div class="table-loading">Chargement…</div>
       } @else if (users().length === 0) {
         <div class="table-empty">
-          <span>👥</span>
+          <span class="material-icons" style="font-size: 3rem; color: var(--text-light);">group</span>
           <p>Aucun utilisateur trouvé.</p>
         </div>
       } @else {
@@ -100,11 +100,11 @@
 
       <div class="modal-header">
         <h2>{{ isEditing() ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur' }}</h2>
-        <button class="modal-close" (click)="closeModal()">✕</button>
+        <button class="modal-close" (click)="closeModal()"><span class="material-icons">close</span></button>
       </div>
 
       @if (error()) {
-        <div class="alert-error">⚠️ {{ error() }}</div>
+        <div class="alert-error"><span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">warning</span> {{ error() }}</div>
       }
 
       <form (ngSubmit)="submit()" #f="ngForm">

@@ -85,8 +85,8 @@ export class ChefPlagiat implements OnInit {
         this.submitting.set(false);
         this.showModal.set(false);
         const msg = this.typeDecision() === 'ACCEPTE'
-          ? '✅ Rapport accepté avec succès.'
-          : '❌ Rapport rejeté. L\'étudiant sera notifié.';
+          ? 'Rapport accepté avec succès.'
+          : 'Rapport rejeté. L\'étudiant sera notifié.';
         this.success.set(msg);
         this.analyse.update(a => a ? { ...a, statut_rapport: this.typeDecision()! } : a);
       },
