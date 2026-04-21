@@ -16,8 +16,14 @@ class ThemeController extends Controller
     public function soumettreTheme(Request $request)
     {
         $user = $request->user();
-        if (!$user->etudiant) {
+        if ($user->role !== 'etudiant') {
             return response()->json(['message' => 'Accès réservé aux étudiants.'], 403);
+        }
+
+        // Lazy creation pour les anciens comptes sans profil
+        if (!$user->etudiant) {
+            Etudiant::create(['user_id' => $user->id]);
+            $user->load('etudiant');
         }
 
         $request->validate([
@@ -39,13 +45,80 @@ class ThemeController extends Controller
     }
 
     /**
+     * Pour le Chef : Récupérer l'historique des décisions (thèmes traités)
+     */
+    public function getHistoriqueChef(Request $request)
+    {
+        $statut = $request->query('statut');
+
+        // Statuts qui représentent une décision prise
+        $statutsDecides = ['VALIDE_CHEF', 'REJETE_CHEF', 'VALIDE_ADMIN', 'REJETE_ADMIN'];
+
+        $query = Theme::with('etudiant.user')
+            ->whereIn('statut', $statutsDecides)
+            ->orderBy('updated_at', 'desc');
+
+        // Filtrage par catégorie VALIDE / REJETE
+        if ($statut === 'VALIDE') {
+            $query->whereIn('statut', ['VALIDE_CHEF', 'VALIDE_ADMIN']);
+        } elseif ($statut === 'REJETE') {
+            $query->whereIn('statut', ['REJETE_CHEF', 'REJETE_ADMIN']);
+        }
+
+        $themes = $query->get()->map(function ($theme) {
+            return [
+                'id'          => $theme->id,
+                'titre'       => $theme->titre,
+                'description' => $theme->description,
+                'statut'      => $this->normaliserStatut($theme->statut),
+                'statut_raw'  => $theme->statut,
+                'motif_rejet' => $theme->motif_rejet,
+                'created_at'  => $theme->created_at,
+                'updated_at'  => $theme->updated_at,
+                'etudiant'    => $theme->etudiant ? [
+                    'id'    => $theme->etudiant->id,
+                    'name'  => $theme->etudiant->user->name ?? 'Inconnu',
+                    'email' => $theme->etudiant->user->email ?? '',
+                ] : null,
+            ];
+        });
+
+        return response()->json($themes);
+    }
+
+    /**
+     * Pour le Chef : Rechercher des thèmes par mot-clé
+     */
+    public function rechercherThemes(Request $request)
+    {
+        $motCle = $request->query('motCle', '');
+
+        $themes = Theme::with('etudiant.user')
+            ->where(function ($q) use ($motCle) {
+                $q->where('titre', 'like', "%{$motCle}%")
+                  ->orWhere('description', 'like', "%{$motCle}%");
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($themes);
+    }
+
+    /**
+     * Normalise les statuts DB en statuts simplifiés pour le frontend
+     */
+    private function normaliserStatut(string $statut): string
+    {
+        if (in_array($statut, ['VALIDE_CHEF', 'VALIDE_ADMIN'])) return 'VALIDE';
+        if (in_array($statut, ['REJETE_CHEF', 'REJETE_ADMIN'])) return 'REJETE';
+        return 'EN_ATTENTE';
+    }
+
+    /**
      * Pour le Chef : Récupérer les thèmes en attente
      */
     public function getThemesEnAttenteChef(Request $request)
     {
-        // On suppose que le rôle 'chef' ou un attribut spécifique identifie le chef
-        // Dans ce projet, le chef est souvent l'admin ou a un middleware spécifique
-        
         $themes = Theme::with('etudiant.user')
             ->where('statut', 'EN_ATTENTE_CHEF')
             ->orderBy('created_at', 'desc')
@@ -173,7 +246,18 @@ class ThemeController extends Controller
      */
     public function mesThemes(Request $request)
     {
-        $themes = Theme::where('etudiant_id', $request->user()->etudiant->id)
+        $user = $request->user();
+        
+        if ($user->role !== 'etudiant') {
+            return response()->json(['message' => 'Accès réservé aux étudiants.'], 403);
+        }
+
+        if (!$user->etudiant) {
+            Etudiant::create(['user_id' => $user->id]);
+            $user->load('etudiant');
+        }
+
+        $themes = Theme::where('etudiant_id', $user->etudiant->id)
             ->orderBy('created_at', 'desc')
             ->get();
             

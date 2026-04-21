@@ -6,6 +6,7 @@ export interface ThemeChef {
   titre: string;
   description: string;
   statut: 'EN_ATTENTE' | 'VALIDE' | 'REJETE';
+  statut_raw?: string;
   motif_rejet?: string;
   etudiant?: { id: number; name: string; email: string };
   created_at: string;

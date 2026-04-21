@@ -57,8 +57,14 @@ class AnalyseController extends Controller
     public function derniere(Request $request)
     {
         $user = $request->user();
-        if (!$user->etudiant) {
+        if ($user->role !== 'etudiant') {
             return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        // Lazy creation pour les anciens comptes
+        if (!$user->etudiant) {
+            \App\Models\Etudiant::create(['user_id' => $user->id]);
+            $user->load('etudiant');
         }
 
         // Trouver le dernier rapport de l'étudiant qui a une analyse (soit relation, soit champ direct)

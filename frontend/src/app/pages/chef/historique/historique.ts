@@ -33,6 +33,13 @@ export class ChefHistorique implements OnInit {
   countStatut(s: string) { return this.tous().filter(t => t.statut === s).length; }
 
   readonly statutLabels: Record<string, string> = {
-    VALIDE: 'Validé', REJETE: 'Rejeté', EN_ATTENTE: 'En attente'
+    VALIDE:       'Validé',
+    REJETE:       'Rejeté',
+    EN_ATTENTE:   'En attente',
+    // Valeurs brutes DB (fallback)
+    VALIDE_CHEF:  'Validé (Chef)',
+    REJETE_CHEF:  'Rejeté (Chef)',
+    VALIDE_ADMIN: 'Validé (Admin)',
+    REJETE_ADMIN: 'Rejeté (Admin)',
   };
 }

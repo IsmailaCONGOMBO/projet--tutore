@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Etudiant;
+use App\Models\Enseignant;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -37,6 +39,13 @@ class UserController extends Controller
 
         $data['password'] = bcrypt($data['password']);
         $user = User::create($data);
+
+        // Création automatique du profil selon le rôle
+        if ($user->role === 'etudiant') {
+            Etudiant::create(['user_id' => $user->id]);
+        } elseif ($user->role === 'enseignant') {
+            Enseignant::create(['user_id' => $user->id]);
+        }
 
         return response()->json(
             $user->only('id', 'name', 'email', 'role', 'created_at'),

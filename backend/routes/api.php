@@ -53,9 +53,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/statistiques', [StatistiqueController::class, 'index']);
     Route::get('/statistiques/evolution', [StatistiqueController::class, 'evolution']);
 
-    // Gestion des Thèmes
+    // Gestion des Thèmes (Étudiant)
     Route::post('/themes', [ThemeController::class, 'soumettreTheme']);
     Route::get('/themes/mes', [ThemeController::class, 'mesThemes']);
+
+    // Gestion des Thèmes (Chef de Département) - préfixe /chef/themes
+    Route::prefix('chef/themes')->group(function () {
+        Route::get('/', [ThemeController::class, 'getThemesEnAttenteChef']);
+        Route::get('/historique', [ThemeController::class, 'getHistoriqueChef']);
+        Route::get('/recherche', [ThemeController::class, 'rechercherThemes']);
+        Route::post('/{id}/valider', [ThemeController::class, 'validerParChef']);
+        Route::post('/{id}/rejeter', [ThemeController::class, 'rejeterParChef']);
+    });
+
+    // Routes legacy (compatibilité ancien code)
     Route::get('/themes/en-attente-chef', [ThemeController::class, 'getThemesEnAttenteChef']);
     Route::get('/themes/{id}/similarity', [ThemeController::class, 'checkSimilarity']);
     Route::post('/themes/valider-chef/{id}', [ThemeController::class, 'validerParChef']);
