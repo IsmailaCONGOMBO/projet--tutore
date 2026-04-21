@@ -56,8 +56,8 @@ class AnalyseRapportPlagiatJob implements ShouldQueue
                 throw new \Exception("Fichier PDF introuvable : " . $rapport->fichier_path);
             }
 
-            // 1. Lancer l'analyse
-            $result = $analyzer->analyze($filePath, false);
+            // 1. Lancer l'analyse (en excluant le rapport courant du corpus)
+            $result = $analyzer->analyze($filePath, false, $this->rapportId);
 
             // 2. Sauvegarder le résultat
             $reporter->saveAnalysis($this->rapportId, $result);

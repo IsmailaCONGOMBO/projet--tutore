@@ -19,4 +19,12 @@ interface PreprocessingServiceInterface
      * @return string Le texte prétraité
      */
     public function preprocessText(string $text): string;
+
+    /**
+     * Génère un hash unique du texte nettoyé.
+     *
+     * @param string $text
+     * @return string
+     */
+    public function generateHash(string $text): string;
 }

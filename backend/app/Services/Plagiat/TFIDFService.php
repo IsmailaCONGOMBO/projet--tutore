@@ -65,9 +65,9 @@ class TFIDFService implements TFIDFServiceInterface
             }
         }
 
-        // IDF = log(N / (1 + df))
-        // On évite log(0)
-        return log($totalDocuments / (1 + $documentFrequency));
+        // IDF lissé pour éviter les divisions par zéro et les poids négatifs
+        // Formule standard : log((1 + N) / (1 + df)) + 1
+        return log((1 + $totalDocuments) / (1 + $documentFrequency)) + 1;
     }
 
     /**
@@ -95,16 +95,20 @@ class TFIDFService implements TFIDFServiceInterface
      * 
      * @return array Tableau de documents archivés avec leurs tokens et informations associées
      */
-    public function buildCorpusFromDatabase(): array
+    public function buildCorpusFromDatabase(?int $excludeRapportId = null): array
     {
         $corpus = [];
 
         // Supposons que nous avons une table chapitres avec une relation rapport
         // et qu'on ne prend que les rapports au statut 'accepté'.
         // Si la relation ou la structure exacte diffère, il faudra ajuster.
-        // On ne prend que les rapports au statut 'ARCHIVE', 'NOTE' ou 'ANALYSE' pour la base de comparaison
-        $chapitres = Chapitre::whereHas('rapport', function ($query) {
-            $query->whereIn('statut', ['ARCHIVE', 'NOTE', 'ANALYSE']);
+        // On prend les rapports officiels déjà traités pour la base de comparaison
+        // Statuts : ARCHIVE, NOTE, ANALYSE, VALIDE, REJETE
+        $chapitres = Chapitre::whereHas('rapport', function ($query) use ($excludeRapportId) {
+            $query->whereIn('statut', ['ARCHIVE', 'NOTE', 'ANALYSE', 'VALIDE', 'REJETE']);
+            if ($excludeRapportId) {
+                $query->where('id', '!=', $excludeRapportId);
+            }
         })->get();
 
         foreach ($chapitres as $chapitre) {
@@ -114,7 +118,8 @@ class TFIDFService implements TFIDFServiceInterface
                     'id' => $chapitre->id,
                     'rapport_id' => $chapitre->rapport_id,
                     'doc_name' => 'Rapport_' . $chapitre->rapport_id . '_' . $chapitre->label,
-                    'tokens' => $tokens
+                    'tokens' => $tokens,
+                    'hash' => $chapitre->hash // Ajout du hash dans le corpus
                 ];
             }
         }

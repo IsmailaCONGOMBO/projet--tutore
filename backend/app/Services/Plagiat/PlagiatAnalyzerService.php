@@ -39,9 +39,9 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
     /**
      * @inheritDoc
      */
-    public function analyze(string $pdfPath, bool $isTest = false): array
+    public function analyze(string $pdfPath, bool $isTest = false, ?int $excludeRapportId = null): array
     {
-        Log::info("PlagiatAnalyzerService: Début de l'analyse pour $pdfPath (is_test=" . ($isTest ? 'true' : 'false') . ")");
+        Log::info("PlagiatAnalyzerService: Début de l'analyse pour $pdfPath (is_test=" . ($isTest ? 'true' : 'false') . ", exclude=$excludeRapportId)");
 
         // 1. Extraire le texte
         $pages = $this->extractor->extractText($pdfPath);
@@ -57,8 +57,8 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
 
         // Préparer le corpus
         // En conditions réelles, le chargement du corpus devrait être optimisé ou mis en cache
-        Log::info("PlagiatAnalyzerService: Construction du corpus depuis la base de données.");
-        $corpus = $this->tfidf->buildCorpusFromDatabase();
+        Log::info("PlagiatAnalyzerService: Construction du corpus depuis la base de données (exclusion ID: $excludeRapportId).");
+        $corpus = $this->tfidf->buildCorpusFromDatabase($excludeRapportId);
         
         // Si le corpus est vide, on arrête ici (taux de plagiat 0%)
         if (empty($corpus)) {
@@ -84,25 +84,49 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
             $segmentLabel = $segment['label'];
             $segmentText = $segment['text'];
             
-            // a. Préprocesser
+            // a. Préprocesser et Hacher (Fast Match)
             $segmentTokens = $this->preprocessor->tokenizeAndStem($segmentText);
+            $segmentHash = $this->preprocessor->generateHash($segmentText);
             $segmentWordCount = count($segmentTokens);
             
             if ($segmentWordCount === 0) {
                 // Segment vide
                 $segmentsResult[] = [
                     'label' => $segmentLabel,
+                    'text' => $segmentText,
+                    'hash' => $segmentHash,
                     'taux' => 0.0,
                     'nb_mots' => 0,
                     'doc_similaire' => null,
-                    'scores_detail' => [
-                        'cosinus' => 0.0,
-                        'jaccard' => 0.0,
-                        'ngram' => 0.0
-                    ]
+                    'scores_detail' => ['cosinus' => 0.0, 'jaccard' => 0.0, 'ngram' => 0.0]
                 ];
                 continue;
             }
+
+            // --- EXPERT : RECHERCHE DE CORRESPONDANCE EXACTE (HASH) ---
+            $isExactMatch = false;
+            foreach ($corpus as $doc) {
+                if (isset($doc['hash']) && $doc['hash'] === $segmentHash) {
+                    Log::debug("PlagiatAnalyzerService: Match exact détecté (Hash) pour le segment $segmentLabel avec " . $doc['doc_name']);
+                    $segmentsResult[] = [
+                        'label' => $segmentLabel,
+                        'text' => $segmentText,
+                        'hash' => $segmentHash,
+                        'taux' => 100.0,
+                        'nb_mots' => $segmentWordCount,
+                        'doc_similaire' => $doc['doc_name'],
+                        'scores_detail' => ['cosinus' => 1.0, 'jaccard' => 1.0, 'ngram' => 1.0]
+                    ];
+                    $totalWordCount += $segmentWordCount;
+                    $weightedScoreSum += (100.0 * $segmentWordCount);
+                    $isExactMatch = true;
+                    break;
+                }
+            }
+
+            if ($isExactMatch) continue;
+
+            // --- ANALYSE STATISTIQUE CLASSIQUE ---
 
             // b. Vecteur TF-IDF du segment
             $segmentTfidf = $this->tfidf->computeTFIDF($segmentTokens, $corpusTokensList);
@@ -118,8 +142,6 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
             // c. Comparer contre chaque document du corpus
             foreach ($corpus as $index => $doc) {
                 $docTokens = $doc['tokens'];
-                
-                // Si le document est vide, on ignore
                 if (count($docTokens) === 0) continue;
 
                 $docTfidf = $this->tfidf->computeTFIDF($docTokens, $corpusTokensList);
@@ -129,8 +151,11 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
                 $jaccardScore = $this->similarity->jaccardSimilarity($segmentTokens, $docTokens);
                 $ngramScore = $this->paraphrase->ngramSimilarity($segmentTokens, $docTokens, 3);
 
-                // Formule pondérée : (0.5 * cos) + (0.3 * jaccard) + (0.2 * ngram)
-                $globalScore = (0.50 * $cosineScore) + (0.30 * $jaccardScore) + (0.20 * $ngramScore);
+                // Formule pondérée EXPERT : (0.6 * cos) + (0.1 * jaccard) + (0.3 * ngram)
+                // On privilégie le Cosinus (sémantique/lexical) et les N-grams (séquences)
+                $globalScore = (0.60 * $cosineScore) + (0.10 * $jaccardScore) + (0.30 * $ngramScore);
+
+                Log::debug("PlagiatAnalyzerService: Comparaison $segmentLabel vs " . $doc['doc_name'] . " - Sc: " . round($globalScore, 4) . " (Cos: " . round($cosineScore, 4) . ", Jac: " . round($jaccardScore, 4) . ", Ngr: " . round($ngramScore, 4) . ")");
 
                 if ($globalScore > $maxScore) {
                     $maxScore = $globalScore;
@@ -149,6 +174,8 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
 
             $segmentsResult[] = [
                 'label' => $segmentLabel,
+                'text' => $segmentText,
+                'hash' => $segmentHash,
                 'taux' => $tauxPourcentage,
                 'nb_mots' => $segmentWordCount,
                 'doc_similaire' => $bestDocName,

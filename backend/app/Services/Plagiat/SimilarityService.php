@@ -35,7 +35,14 @@ class SimilarityService implements SimilarityServiceInterface
             return 0.0;
         }
 
-        return $dotProduct / ($normA * $normB);
+        $similarity = $dotProduct / ($normA * $normB);
+
+        // Gérer les imprécisions flottantes (ex: 1.0000000000002)
+        if ($similarity > 1.0) {
+            return 1.0;
+        }
+
+        return $similarity;
     }
 
     /**

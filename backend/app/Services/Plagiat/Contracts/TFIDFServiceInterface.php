@@ -31,9 +31,8 @@ interface TFIDFServiceInterface
     public function computeTFIDF(array $tokens, array $corpus): array;
 
     /**
-     * Construit le corpus à partir de la base de données.
-     *
+     * @param int|null $excludeRapportId ID du rapport à exclure du corpus (cas d'une ré-analyse)
      * @return array
      */
-    public function buildCorpusFromDatabase(): array;
+    public function buildCorpusFromDatabase(?int $excludeRapportId = null): array;
 }

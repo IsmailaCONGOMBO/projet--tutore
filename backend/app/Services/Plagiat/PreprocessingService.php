@@ -3,7 +3,7 @@
 namespace App\Services\Plagiat;
 
 use App\Services\Plagiat\Contracts\PreprocessingServiceInterface;
-use Wamania\Snowball\French;
+use Wamania\Snowball\Stemmer\French;
 
 class PreprocessingService implements PreprocessingServiceInterface
 {
@@ -94,15 +94,33 @@ class PreprocessingService implements PreprocessingServiceInterface
      * @param string $text
      * @return array
      */
+    /**
+     * Génère un hash unique du texte nettoyé pour une comparaison ultra-rapide.
+     * 
+     * @param string $text
+     * @return string
+     */
+    public function generateHash(string $text): string
+    {
+        $cleaned = $this->preprocessText($text);
+        // Supprimer tous les espaces pour un hash robuste à la mise en page
+        $compact = str_replace(' ', '', $cleaned);
+        return hash('sha256', $compact);
+    }
+
     public function tokenizeAndStem(string $text): array
     {
         // 1. Conversion en minuscules
         $text = mb_strtolower($text, 'UTF-8');
 
-        // 2. Suppression des accents
+        // 2. Gestion des ligatures et caractères spéciaux avant suppression
+        $text = str_replace(['œ', 'æ', '«', '»', '“', '”', '…'], ['oe', 'ae', '"', '"', '"', '"', '...'], $text);
+
+        // 3. Suppression des accents
         $text = $this->removeAccents($text);
 
-        // 3. Suppression de la ponctuation et caractères spéciaux (garder [a-z0-9 ])
+        // 4. Suppression de la ponctuation et caractères non-alphanumériques (garder espaces)
+        // Utilisation de \p{L} pour garder les lettres de n'importe quelle langue si besoin
         $text = preg_replace('/[^a-z0-9\s]/', ' ', $text);
 
         // Réduire les espaces multiples
@@ -119,9 +137,9 @@ class PreprocessingService implements PreprocessingServiceInterface
         $cleanedTokens = [];
 
         foreach ($tokens as $token) {
-            // 4. Suppression des mots vides
+            // 5. Suppression des mots vides et tokens trop courts
             if (!in_array($token, $this->stopWords) && mb_strlen($token) > 1) {
-                // 5. Stemming
+                // 6. Stemming
                 $stemmedToken = $this->stemmer->stem($token);
                 if (!empty($stemmedToken)) {
                     $cleanedTokens[] = $stemmedToken;

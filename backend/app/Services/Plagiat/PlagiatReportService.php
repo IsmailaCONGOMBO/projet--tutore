@@ -60,8 +60,9 @@ class PlagiatReportService implements PlagiatReportServiceInterface
                     $chapitre->numero = $numero;
                 }
 
-                // On ne sauvegarde pas le full text ici car on n'a pa transmis le texte complet brut 
-                // au PlagiatReportService. Mais on met à jour les taux de plagiat de chaque chapitre.
+                // Sauvegarder le texte brut pour les comparaisons futures (Indexation)
+                $chapitre->contenu_texte = $segment['text'] ?? null;
+                $chapitre->hash = $segment['hash'] ?? null;
                 $chapitre->taux_plagiat = $segment['taux'];
                 $chapitre->nb_mots = $segment['nb_mots'];
                 $chapitre->doc_similaire = $segment['doc_similaire'];
