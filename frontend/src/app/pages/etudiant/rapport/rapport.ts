@@ -70,7 +70,14 @@ export class EtudiantRapport implements OnInit {
         this.testReportHtml.set(res.html_report);
         this.testing.set(false);
       },
-      error: () => this.testing.set(false)
+      error: (err) => {
+        console.error('Erreur test rapide', err);
+        this.message.set({ 
+          type: 'error', 
+          text: err.error?.message || 'L\'analyse a échoué. Vérifiez la taille du PDF (max 20Mo).' 
+        });
+        this.testing.set(false);
+      }
     });
   }
 

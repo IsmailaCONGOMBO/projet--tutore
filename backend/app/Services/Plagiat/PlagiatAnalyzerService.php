@@ -138,6 +138,20 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
         $globalVocabulary = $this->tfidf->buildGlobalVocabulary($corpus, $allSegmentsTokens);
         $globalIDF = $this->tfidf->computeGlobalIDF($globalVocabulary, $corpus, $allSegmentsTokens);
 
+        // ✅ FIX CRITIQUE : Comparer contre TOUT le corpus (Diagnostic 6)
+        $targetCorpus = $corpus;
+
+        // ✅ EXPERT NLP : Pré-calculer les vecteurs TF-IDF pour tout le corpus
+        // Cela évite de recalculer les vecteurs des documents archivés pour chaque segment.
+        $corpusTfidfVectors = [];
+        foreach ($targetCorpus as $index => $doc) {
+            $corpusTfidfVectors[$index] = $this->tfidf->computeTFIDFWithVocabulary(
+                $doc['tokens'],
+                $globalVocabulary,
+                $globalIDF
+            );
+        }
+
         $segmentsResult  = [];
         $totalWordCount  = 0;
         $weightedScoreSum = 0;
@@ -145,7 +159,7 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
         // ──────────────────────────────────────────────────────────────────────
         // ÉTAPE 6 : Analyse de chaque segment
         // ──────────────────────────────────────────────────────────────────────
-        foreach ($segments as $segment) {
+        foreach ($segments as $segmentIndex => $segment) {
             $segmentLabel = $segment['label'];
             $segmentText  = $segment['text'];
 
@@ -154,7 +168,7 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
             $segmentHash      = $this->preprocessor->generateHash($segmentText);
             $segmentWordCount = count($segmentTokens);
 
-            Log::debug("PlagiatAnalyzerService: Segment '$segmentLabel' — {$segmentWordCount} tokens, hash=$segmentHash");
+            Log::info("PlagiatAnalyzerService: Analyse du segment " . ($segmentIndex+1) . "/" . count($segments) . " ($segmentLabel)");
 
             if ($segmentWordCount === 0) {
                 $segmentsResult[] = $this->emptySegmentResult($segmentLabel, $segmentText, $segmentHash);
@@ -163,10 +177,6 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
 
             // ── FAST-MATCH NIVEAU SEGMENT (hash) ─────────────────────────────
             $isExactMatch = false;
-
-            // ✅ FIX CRITIQUE : Comparer contre TOUT le corpus (Diagnostic 6)
-            // On ne filtre plus par granularity, car un chapitre peut être plagié depuis un rapport entier ou vice-versa.
-            $targetCorpus = $corpus;
 
             foreach ($targetCorpus as $doc) {
                 if (!empty($doc['hash']) && $doc['hash'] === $segmentHash) {
@@ -197,24 +207,20 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
             $bestDocName    = null;
             $bestScoresDetail = ['cosinus' => 0.0, 'jaccard' => 0.0, 'ngram' => 0.0];
 
-            foreach ($targetCorpus as $doc) {
+            // ✅ EXPERT NLP : Pré-calculer le vecteur TF-IDF du segment une seule fois
+            $segmentTfidf = $this->tfidf->computeTFIDFWithVocabulary(
+                $segmentTokens,
+                $globalVocabulary,
+                $globalIDF
+            );
+
+            foreach ($targetCorpus as $docIndex => $doc) {
                 $docTokens = $doc['tokens'];
                 if (count($docTokens) === 0) {
                     continue;
                 }
 
-                // ✅ EXPERT NLP : Vectorisation stable sur le vocabulaire global
-                $segmentTfidf = $this->tfidf->computeTFIDFWithVocabulary(
-                    $segmentTokens,
-                    $globalVocabulary,
-                    $globalIDF
-                );
-
-                $docTfidf = $this->tfidf->computeTFIDFWithVocabulary(
-                    $docTokens,
-                    $globalVocabulary,
-                    $globalIDF
-                );
+                $docTfidf = $corpusTfidfVectors[$docIndex];
 
                 $cosineScore   = $this->similarity->cosineSimilarity($segmentTfidf, $docTfidf);
                 $jaccardScore  = $this->similarity->jaccardSimilarity($segmentTokens, $docTokens);

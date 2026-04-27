@@ -80,7 +80,7 @@ class PlagiatController extends Controller
 
             $file = $request->file('fichier');
             $tempPath = $file->store('temp_tests');
-            $fullPath = storage_path('app/' . $tempPath);
+            $fullPath = Storage::path($tempPath);
 
             Log::info("PlagiatController: Début de l'analyse en mode test.");
 

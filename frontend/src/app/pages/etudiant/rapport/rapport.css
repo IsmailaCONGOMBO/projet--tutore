@@ -213,7 +213,44 @@ input[type="file"] {
 .report-container ul { padding-left: 1.5rem; margin-top: 1rem; }
 .report-container li { margin-bottom: 0.5rem; font-size: 0.875rem; }
 
-.btn-icon:hover { color: #4f46e5; }
+/* Embedded Report UI */
+.embedded-report {
+  margin-top: 1.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.report-header {
+  padding: 1rem 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #4f46e5;
+}
+
+.report-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.report-content {
+  padding: 1.5rem;
+  max-height: 500px;
+  overflow-y: auto;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.report-content::-webkit-scrollbar { width: 6px; }
+.report-content::-webkit-scrollbar-track { background: #f1f5f9; }
+.report-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 
 .spinner { width: 18px; height: 18px; border: 2px solid rgba(0,0,0,0.1); border-top-color: currentColor; border-radius: 50%; animation: rot 0.8s linear infinite; }
 @keyframes rot { to { transform: rotate(360deg); } }

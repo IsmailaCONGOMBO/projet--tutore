@@ -14,6 +14,11 @@
       </div>
       <div class="card-body">
         <p class="hint">Ce test est confidentiel et n'impacte pas votre dossier officiel.</p>
+        
+        @if (message(); as msg) { 
+          <div [class]="'alert alert-' + msg.type" style="margin-bottom: 1rem;">{{ msg.text }}</div> 
+        }
+
         <div class="upload-zone">
           <input type="file" (change)="onFileSelected($event, true)" accept=".pdf">
           <button class="btn-test" (click)="lancerTest()" [disabled]="!testFile || testing()">
@@ -35,11 +40,15 @@
               @if (res.taux > 20) { <span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">warning</span> Ce taux est trop élevé. Veuillez corriger avant soumission. }
               @else { <span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">check_circle</span> Ce taux est acceptable pour la soumission officielle. }
             </p>
+          </div>
 
-            <button class="btn-details" (click)="showTestDetails.set(true)">
-              <span class="material-icons">description</span>
-              Voir le rapport complet
-            </button>
+          <!-- Affichage direct du rapport détaillé -->
+          <div class="embedded-report">
+            <div class="report-header">
+              <span class="material-icons">analytics</span>
+              <h4>Analyse détaillée</h4>
+            </div>
+            <div class="report-content" [innerHTML]="testReportHtml()"></div>
           </div>
         }
       </div>
