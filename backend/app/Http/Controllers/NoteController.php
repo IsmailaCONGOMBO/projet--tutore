@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Note;
 use App\Models\Rapport;
 use App\Models\Notification;
+use App\Http\Controllers\HistoriqueController;
 
 class NoteController extends Controller
 {
@@ -107,12 +108,41 @@ class NoteController extends Controller
             return response()->json(['message' => 'Non autorisé.'], 403);
         }
 
-        $notes = Note::with(['rapport.etudiant.user', 'enseignant.user'])
+        // 1. Anciennes notes (Modulaire)
+        $notesTable = Note::with(['rapport.etudiant.user', 'enseignant.user'])
             ->where('statut_validation', 'EN ATTENTE')
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function($n) {
+                return [
+                    'id' => $n->id,
+                    'is_legacy' => true,
+                    'note' => $n->valeur,
+                    'commentaire' => $n->commentaire,
+                    'date' => $n->created_at,
+                    'etudiant' => $n->rapport->etudiant->user->name ?? 'Inconnu',
+                    'enseignant' => $n->enseignant->user->name ?? 'Inconnu',
+                    'titre' => $n->rapport->titre ?? 'Rapport sans titre'
+                ];
+            });
 
-        return response()->json($notes);
+        // 2. Nouveaux rapports (Intégré)
+        $rapportsTable = Rapport::with(['etudiant.user', 'enseignant.user'])
+            ->where('statut', 'NOTE_SOUMISE')
+            ->get()
+            ->map(function($r) {
+                return [
+                    'id' => $r->id,
+                    'is_legacy' => false,
+                    'note' => $r->note,
+                    'commentaire' => $r->commentaire,
+                    'date' => $r->date_correction ?? $r->updated_at,
+                    'etudiant' => $r->etudiant->user->name ?? 'Inconnu',
+                    'enseignant' => $r->enseignant->user->name ?? 'Inconnu',
+                    'titre' => $r->titre
+                ];
+            });
+
+        return response()->json($notesTable->merge($rapportsTable));
     }
 
     // Pour l'Admin : valider une note
@@ -127,6 +157,9 @@ class NoteController extends Controller
             'statut_validation' => 'VALIDÉ',
             'motif_rejet' => null
         ]);
+
+        // Log action
+        HistoriqueController::log('VALIDATION_NOTE', $note, "Validation de la note pour le rapport : " . ($note->rapport->titre ?? 'Inconnu'));
 
         // Notifier l'étudiant
         if ($note->rapport && $note->rapport->etudiant && $note->rapport->etudiant->user) {
@@ -155,6 +188,9 @@ class NoteController extends Controller
             'statut_validation' => 'REJETÉ',
             'motif_rejet' => $request->motif
         ]);
+
+        // Log action
+        HistoriqueController::log('REJET_NOTE', $note, "Rejet de la note pour le rapport : " . ($note->rapport->titre ?? 'Inconnu') . ". Motif : " . $request->motif);
 
         // Notifier l'enseignant
         if ($note->enseignant && $note->enseignant->user) {

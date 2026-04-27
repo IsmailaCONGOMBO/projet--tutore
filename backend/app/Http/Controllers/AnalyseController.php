@@ -43,9 +43,9 @@ class AnalyseController extends Controller
             'analyse_date' => $analyse->analyse_le ? $analyse->analyse_le->format('Y-m-d H:i:s') : $analyse->created_at->format('Y-m-d H:i:s'),
             'passages_suspects' => collect($analyse->passages_suspects)->map(function ($p) {
                 return [
-                    'texte' => $p['texte'] ?? 'N/A',
-                    'source' => $p['source_titre'] ?? ($p['source'] ?? 'Source inconnue'),
-                    'similarite' => $p['similarite'] ?? 0
+                    'texte' => $p['text'] ?? ($p['texte'] ?? 'N/A'),
+                    'source' => $p['doc_similaire'] ?? ($p['source_titre'] ?? ($p['source'] ?? 'Source inconnue')),
+                    'similarite' => $p['taux'] ?? ($p['similarite'] ?? 0)
                 ];
             })
         ]);

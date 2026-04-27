@@ -12,6 +12,7 @@ class Chapitre extends Model
         'label',
         'numero',
         'contenu_texte',
+        'hash',
         'taux_plagiat',
         'nb_mots',
         'doc_similaire'

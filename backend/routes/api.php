@@ -8,6 +8,8 @@ use App\Http\Controllers\AnalyseController;
 use App\Http\Controllers\StatistiqueController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ThemeController;
+use App\Http\Controllers\FiliereController;
+use App\Http\Controllers\HistoriqueController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +21,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Gestion des utilisateurs (admin uniquement)
     Route::apiResource('users', UserController::class);
+    Route::apiResource('filieres', FiliereController::class);
+    Route::get('/historique', [HistoriqueController::class, 'index']);
 
     // Espace Admin - Validation des notes
     Route::prefix('notes')->group(function () {
@@ -59,6 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Gestion des Thèmes (Chef de Département) - préfixe /chef/themes
     Route::prefix('chef/themes')->group(function () {
+        Route::get('/stats', [ThemeController::class, 'getStatsChef']);
         Route::get('/', [ThemeController::class, 'getThemesEnAttenteChef']);
         Route::get('/historique', [ThemeController::class, 'getHistoriqueChef']);
         Route::get('/recherche', [ThemeController::class, 'rechercherThemes']);

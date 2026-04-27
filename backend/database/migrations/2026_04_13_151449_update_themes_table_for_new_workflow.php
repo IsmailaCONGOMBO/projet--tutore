@@ -25,7 +25,9 @@ return new class extends Migration
         });
 
         // Remise en enum avec les nouvelles valeurs
-        DB::statement("ALTER TABLE themes MODIFY COLUMN statut ENUM('EN_ATTENTE_CHEF', 'VALIDE_CHEF', 'REJETE_CHEF', 'VALIDE_ADMIN', 'REJETE_ADMIN') DEFAULT 'EN_ATTENTE_CHEF'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE themes MODIFY COLUMN statut ENUM('EN_ATTENTE_CHEF', 'VALIDE_CHEF', 'REJETE_CHEF', 'VALIDE_ADMIN', 'REJETE_ADMIN') DEFAULT 'EN_ATTENTE_CHEF'");
+        }
     }
 
     public function down(): void
@@ -39,6 +41,8 @@ return new class extends Migration
             $table->string('statut')->change();
         });
 
-        DB::statement("ALTER TABLE themes MODIFY COLUMN statut ENUM('EN_ATTENTE', 'VALIDE', 'REJETE') DEFAULT 'EN_ATTENTE'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE themes MODIFY COLUMN statut ENUM('EN_ATTENTE', 'VALIDE', 'REJETE') DEFAULT 'EN_ATTENTE'");
+        }
     }
 };

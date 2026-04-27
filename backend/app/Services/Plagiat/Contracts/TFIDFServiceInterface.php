@@ -35,4 +35,27 @@ interface TFIDFServiceInterface
      * @return array
      */
     public function buildCorpusFromDatabase(?int $excludeRapportId = null): array;
+
+    /**
+     * @param array $tokens
+     * @param array $vocabulary
+     * @param array $globalIDF
+     * @return array
+     */
+    public function computeTFIDFWithVocabulary(array $tokens, array $vocabulary, array $globalIDF): array;
+
+    /**
+     * @param array $corpus
+     * @param array $newDocTokens
+     * @return array
+     */
+    public function buildGlobalVocabulary(array $corpus, array $newDocTokens): array;
+
+    /**
+     * @param array $vocabulary
+     * @param array $corpus
+     * @param array $newDocTokens
+     * @return array
+     */
+    public function computeGlobalIDF(array $vocabulary, array $corpus, array $newDocTokens): array;
 }

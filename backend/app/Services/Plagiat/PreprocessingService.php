@@ -102,14 +102,24 @@ class PreprocessingService implements PreprocessingServiceInterface
      */
     public function generateHash(string $text): string
     {
-        $cleaned = $this->preprocessText($text);
-        // Supprimer tous les espaces pour un hash robuste à la mise en page
-        $compact = str_replace(' ', '', $cleaned);
-        return hash('sha256', $compact);
+        // 1. Passage en minuscule
+        $text = mb_strtolower($text, 'UTF-8');
+        
+        // 2. Suppression des accents
+        $text = $this->removeAccents($text);
+        
+        // 3. Suppression de TOUT ce qui n'est pas alphanumérique [a-z0-9]
+        // Cela élimine ponctuation, espaces, sauts de ligne, symboles...
+        $text = preg_replace('/[^a-z0-9]/', '', $text);
+
+        return hash('sha256', $text);
     }
 
     public function tokenizeAndStem(string $text): array
     {
+        // 0. Normalisation de l'encoding (Diagnostic 4)
+        $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8'); // Forcer l'UTF-8 propre
+        
         // 1. Conversion en minuscules
         $text = mb_strtolower($text, 'UTF-8');
 

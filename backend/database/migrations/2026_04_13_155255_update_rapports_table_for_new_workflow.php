@@ -29,17 +29,19 @@ return new class extends Migration
         });
 
         // Remise en enum avec les nouvelles valeurs (sans TEST car volatile)
-        DB::statement("ALTER TABLE rapports MODIFY COLUMN statut ENUM(
-            'EN_ATTENTE_ANALYSE_CHEF',
-            'REJETE_PLAGIAT',
-            'VALIDE_PLAGIAT',
-            'ASSIGNE_ENSEIGNANT',
-            'NOTE_SOUMISE',
-            'NOTE_VALIDEE_ADMIN',
-            'NOTE_REJETEE_ADMIN',
-            'VALIDE_FINAL',
-            'REJETE_FINAL'
-        ) DEFAULT 'EN_ATTENTE_ANALYSE_CHEF'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE rapports MODIFY COLUMN statut ENUM(
+                'EN_ATTENTE_ANALYSE_CHEF',
+                'REJETE_PLAGIAT',
+                'VALIDE_PLAGIAT',
+                'ASSIGNE_ENSEIGNANT',
+                'NOTE_SOUMISE',
+                'NOTE_VALIDEE_ADMIN',
+                'NOTE_REJETEE_ADMIN',
+                'VALIDE_FINAL',
+                'REJETE_FINAL'
+            ) DEFAULT 'EN_ATTENTE_ANALYSE_CHEF'");
+        }
     }
 
     public function down(): void
@@ -52,6 +54,8 @@ return new class extends Migration
             $table->string('statut')->change();
         });
 
-        DB::statement("ALTER TABLE rapports MODIFY COLUMN statut ENUM('EN_ATTENTE', 'ANALYSE', 'CORRIGE', 'NOTE', 'ARCHIVE') DEFAULT 'EN_ATTENTE'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE rapports MODIFY COLUMN statut ENUM('EN_ATTENTE', 'ANALYSE', 'CORRIGE', 'NOTE', 'ARCHIVE') DEFAULT 'EN_ATTENTE'");
+        }
     }
 };

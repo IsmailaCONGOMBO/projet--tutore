@@ -32,10 +32,10 @@ class StatistiqueController extends Controller
                 return $r->taux_plagiat ?? ($r->analyse->taux_global ?? 0);
             }) ?? 0;
 
-        // Statistiques des notes
-        $notesEnAttente = Note::where('statut_validation', 'EN ATTENTE')->count();
-        $notesValidees = Note::where('statut_validation', 'VALIDÉ')->count();
-        $notesRejetees = Note::where('statut_validation', 'REJETÉ')->count();
+        // Statistiques des notes (Flux intégré sur Rapport)
+        $notesEnAttente = Rapport::where('statut', 'NOTE_SOUMISE')->count();
+        $notesValidees = Rapport::whereIn('statut', ['NOTE_VALIDEE_ADMIN', 'VALIDE_FINAL', 'REJETE_FINAL'])->count();
+        $notesRejetees = Rapport::where('statut', 'NOTE_REJETEE_ADMIN')->count();
 
         // Rapports par filière avec taux de plagiat
         $rapportsParFiliere = DB::table('rapports')

@@ -66,4 +66,24 @@ class SimilarityService implements SimilarityServiceInterface
 
         return count($intersection) / $countUnion;
     }
+
+    /**
+     * Similarité de recouvrement (Overlap Coefficient).
+     * Calcule quelle proportion du plus petit document est contenue dans le plus grand.
+     * Très efficace pour détecter le plagiat d'un chapitre entier.
+     */
+    public function overlapSimilarity(array $tokensA, array $tokensB): float
+    {
+        $setA = array_unique($tokensA);
+        $setB = array_unique($tokensB);
+
+        $intersection = array_intersect($setA, $setB);
+        $minSize = min(count($setA), count($setB));
+
+        if ($minSize === 0) {
+            return 0.0;
+        }
+
+        return count($intersection) / $minSize;
+    }
 }

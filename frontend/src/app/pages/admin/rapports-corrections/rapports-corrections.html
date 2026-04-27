@@ -23,77 +23,114 @@
     </select>
   </div>
 
-  <div class="table-card">
-    @if (loading()) {
-      <div class="loading-state">Chargement des données...</div>
-    } @else {
-      <table>
-        <thead>
-          <tr>
-            <th>Rapport</th>
-            <th>Étudiant</th>
-            <th>Enseignant</th>
-            <th>Plagiat</th>
-            <th>Note</th>
-            <th>Statut</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (r of filteredRapports(); track r.id) {
-            <tr>
-              <td class="td-main">{{ r.titre }}</td>
-              <td>
-                <div class="etudiant-cell">
-                  <span class="etudiant-name">{{ r.etudiant?.user?.name }}</span>
-                  <span class="etudiant-email">{{ r.etudiant?.user?.email }}</span>
-                </div>
-              </td>
-              <td class="td-date">{{ r.enseignant?.user?.name || 'Non assigné' }}</td>
-              <td>
-                @if (r.taux_plagiat !== null) {
-                  <div class="taux-wrap">
-                    <span class="taux-val" [class.taux-bad]="r.taux_plagiat > 25" [class.taux-warn]="r.taux_plagiat > 15">
-                      {{ r.taux_plagiat }}%
-                    </span>
-                    <div class="taux-bar-track">
-                      <div class="taux-bar-fill" [style.width.%]="r.taux_plagiat" 
-                        [class.taux-bad]="r.taux_plagiat > 25" 
-                        [class.taux-warn]="r.taux_plagiat <= 25 && r.taux_plagiat > 15"
-                        [class.taux-ok]="r.taux_plagiat <= 15">
-                      </div>
+  <div class="main-layout">
+    <div class="list-section">
+      <div class="table-card">
+        @if (loading()) {
+          <div class="loading-state">Chargement des données...</div>
+        } @else {
+          <table>
+            <thead>
+              <tr>
+                <th>Rapport</th>
+                <th>Étudiant</th>
+                <th>Plagiat</th>
+                <th>Statut</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of filteredRapports(); track r.id) {
+                <tr [class.active]="selectedRapport()?.id === r.id" (click)="selectRapport(r)">
+                  <td class="td-main">{{ r.titre }}</td>
+                  <td>
+                    <div class="etudiant-cell">
+                      <span class="etudiant-name">{{ r.etudiant?.user?.name }}</span>
                     </div>
-                  </div>
-                } @else {
-                  <span class="td-na">N/A</span>
-                }
-              </td>
-              <td class="td-main">
-                {{ r.note !== null ? r.note + '/20' : '-' }}
-              </td>
-              <td>
-                <span class="badge" [class]="getStatutClass(r.statut)">
-                  {{ r.statut.replace('_', ' ') }}
-                </span>
-              </td>
-              <td>
-                <button class="btn-mark-all" style="padding: 0.3rem 0.6rem; display: flex; align-items: center; gap: 4px;" (click)="download(r.id)">
-                  <span class="material-icons" style="font-size: 1.1rem;">download</span> PDF
-                </button>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="7">
-                <div class="empty-state">
-                  <span class="material-icons" style="font-size: 3rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;">folder_open</span>
-                  Aucun rapport trouvé.
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
+                  </td>
+                  <td>
+                    @if (r.taux_plagiat !== null) {
+                      <span class="taux-val" [class.taux-bad]="r.taux_plagiat > 25" [class.taux-warn]="r.taux_plagiat > 15">
+                        {{ r.taux_plagiat }}%
+                      </span>
+                    } @else {
+                      <span class="td-na">N/A</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="badge" [class]="getStatutClass(r.statut)">
+                      {{ r.statut.replace('_', ' ') }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="material-icons" style="color: var(--blue-600);">chevron_right</span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5">
+                    <div class="empty-state">
+                      <span class="material-icons" style="font-size: 3rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;">folder_open</span>
+                      Aucun rapport trouvé.
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    </div>
+
+    <!-- Panneau latéral pour les options d'action -->
+    <aside class="review-panel">
+      @if (selectedRapport(); as r) {
+        <div class="review-card">
+          <h3>Détails & Actions</h3>
+          
+          <div class="info-row">
+            <strong>Rapport</strong>
+            <span>{{ r.titre }}</span>
+          </div>
+          <div class="info-row">
+            <strong>Étudiant</strong>
+            <span>{{ r.etudiant?.user?.name }}</span>
+          </div>
+          <div class="info-row">
+            <strong>Enseignant</strong>
+            <span>{{ r.enseignant?.user?.name || 'Non assigné' }}</span>
+          </div>
+          <div class="info-row">
+            <strong>Statut</strong>
+            <span class="badge" [class]="getStatutClass(r.statut)">{{ r.statut.replace('_', ' ') }}</span>
+          </div>
+
+          <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--off-white-2);">
+
+          <div class="actions">
+            <button class="btn-validate" (click)="voirPlagiat(r.id)" style="background: var(--blue-600); display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <span class="material-icons">analytics</span>
+              Consulter l'Analyse
+            </button>
+            
+            <button class="btn-validate" (click)="download(r.id)" style="background: var(--blue-800); display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <span class="material-icons">download</span>
+              Télécharger PDF
+            </button>
+
+            @if (r.statut === 'NOTE_SOUMISE') {
+              <p style="font-size: 0.8rem; color: var(--text-light); text-align: center; margin-top: 0.5rem;">
+                Note : {{ r.note }}/20. Allez dans "Validation Notes" pour valider.
+              </p>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="select-hint">
+          <span class="material-icons" style="font-size: 3rem; color: var(--off-white-2); margin-bottom: 1rem;">touch_app</span>
+          <p>Sélectionnez un rapport pour voir les options d'action.</p>
+        </div>
+      }
+    </aside>
   </div>
 </div>

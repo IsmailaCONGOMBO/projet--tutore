@@ -28,12 +28,12 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
         SimilarityServiceInterface $similarity,
         ParaphraseDetectionServiceInterface $paraphrase
     ) {
-        $this->extractor = $extractor;
-        $this->segmenter = $segmenter;
+        $this->extractor    = $extractor;
+        $this->segmenter    = $segmenter;
         $this->preprocessor = $preprocessor;
-        $this->tfidf = $tfidf;
-        $this->similarity = $similarity;
-        $this->paraphrase = $paraphrase;
+        $this->tfidf        = $tfidf;
+        $this->similarity   = $similarity;
+        $this->paraphrase   = $paraphrase;
     }
 
     /**
@@ -41,168 +41,286 @@ class PlagiatAnalyzerService implements PlagiatAnalyzerServiceInterface
      */
     public function analyze(string $pdfPath, bool $isTest = false, ?int $excludeRapportId = null): array
     {
-        Log::info("PlagiatAnalyzerService: Début de l'analyse pour $pdfPath (is_test=" . ($isTest ? 'true' : 'false') . ", exclude=$excludeRapportId)");
+        Log::info("PlagiatAnalyzerService: Début analyse — $pdfPath (is_test=" . ($isTest ? 'true' : 'false') . ", exclude=$excludeRapportId)");
 
-        // 1. Extraire le texte
-        $pages = $this->extractor->extractText($pdfPath);
-
-        // 2. Concaténer toutes les pages
+        // ──────────────────────────────────────────────────────────────────────
+        // ÉTAPE 1 : Extraction du texte
+        // ──────────────────────────────────────────────────────────────────────
+        $pages    = $this->extractor->extractText($pdfPath);
         $fullText = '';
         foreach ($pages as $pageData) {
             $fullText .= $pageData['text'] . "\n";
         }
 
-        // 3. Segmenter en chapitres (ou rapport complet)
-        $segments = $this->segmenter->segment($fullText);
+        Log::debug("PlagiatAnalyzerService: Texte extrait — " . mb_strlen($fullText) . " caractères.");
 
-        // Préparer le corpus
-        // En conditions réelles, le chargement du corpus devrait être optimisé ou mis en cache
-        Log::info("PlagiatAnalyzerService: Construction du corpus depuis la base de données (exclusion ID: $excludeRapportId).");
-        $corpus = $this->tfidf->buildCorpusFromDatabase($excludeRapportId);
+        // ──────────────────────────────────────────────────────────────────────
+        // ÉTAPE 2 : Hash du rapport COMPLET (Fast-Match Database)
+        // ──────────────────────────────────────────────────────────────────────
+        // ✅ UTILISATION DU SERVICE DE PRÉTRAITEMENT POUR LE HASH (Source unique de vérité)
+        $fullDocHash = $this->preprocessor->generateHash($fullText);
         
-        // Si le corpus est vide, on arrête ici (taux de plagiat 0%)
-        if (empty($corpus)) {
-            Log::info("PlagiatAnalyzerService: Corpus vide. Taux de plagiat 0% par défaut.");
-            return [
-                'taux_global' => 0.0,
-                'decision' => 'accepte',
-                'segments' => [],
-                'is_test' => $isTest,
-                'analyzed_at' => now()->format('Y-m-d H:i:s')
-            ];
+        Log::info("PlagiatAnalyzerService: [DEBUG HASH] Hash calculé = $fullDocHash");
+
+        // ✅ RECHERCHE DIRECTE EN BASE DE DONNÉES (Ultra Rapide)
+        $existingRapport = \App\Models\Rapport::where('hash_document', $fullDocHash)
+            ->where('id', '!=', $excludeRapportId)
+            ->first();
+
+        if ($existingRapport) {
+            Log::info("PlagiatAnalyzerService: ✅ MATCH HASH BDD détecté avec Rapport #{$existingRapport->id}");
+            
+            $tokens = $this->preprocessor->tokenizeAndStem($fullText);
+            return $this->buildResult(100.0, 'EXACT_MATCH', [[
+                'label'         => 'rapport_complet',
+                'text'          => $fullText,
+                'hash'          => $fullDocHash,
+                'taux'          => 100.0,
+                'nb_mots'       => count($tokens),
+                'tokens_preprocessed' => $tokens, // ✅ Ajouté pour stockage cohérent
+                'doc_similaire' => $existingRapport->titre ?? "Rapport #{$existingRapport->id}",
+                'scores_detail' => ['cosinus' => 1.0, 'jaccard' => 1.0, 'ngram' => 1.0],
+            ]], $isTest, $fullDocHash);
         }
 
-        // Extraire les tokens de chaque doc du corpus pour TFIDF
-        $corpusTokensList = array_column($corpus, 'tokens');
+        // ──────────────────────────────────────────────────────────────────────
+        // ÉTAPE 3 : Construction du corpus (si pas de match hash direct)
+        // ──────────────────────────────────────────────────────────────────────
+        $corpus = $this->tfidf->buildCorpusFromDatabase($excludeRapportId);
 
-        $segmentsResult = [];
-        $totalWordCount = 0;
+        if (empty($corpus)) {
+            Log::info("PlagiatAnalyzerService: Corpus vide → taux 0%.");
+            return $this->buildResult(0.0, 'DIFFERENT', [], $isTest, $fullDocHash);
+        }
+
+        // Séparer les entrées rapport-complet des entrées chapitre
+        $corpusRapports = array_filter($corpus, fn($d) => ($d['granularity'] ?? '') === 'rapport');
+        $corpusChapitres = array_filter($corpus, fn($d) => ($d['granularity'] ?? '') === 'chapitre');
+
+        // Liste de tous les tokens (pour IDF global)
+        $allCorpusTokensList = array_column($corpus, 'tokens');
+
+        // ──────────────────────────────────────────────────────────────────────
+        // ÉTAPE 4 : FAST-MATCH NIVEAU RAPPORT (hash du rapport entier)
+        // ──────────────────────────────────────────────────────────────────────
+        foreach ($corpusRapports as $doc) {
+            if (!empty($doc['hash']) && $doc['hash'] === $fullDocHash) {
+                Log::info("PlagiatAnalyzerService: ✅ FAST-MATCH RAPPORT COMPLET détecté avec " . $doc['doc_name']);
+
+                $fullTokens = $this->preprocessor->tokenizeAndStem($fullText);
+                $wordCount  = count($fullTokens);
+
+                return $this->buildResult(100.0, 'rejete', [[
+                    'label'         => 'rapport_complet',
+                    'text'          => $fullText,
+                    'hash'          => $fullDocHash,
+                    'taux'          => 100.0,
+                    'nb_mots'       => $wordCount,
+                    'tokens_preprocessed' => $fullTokens, // ✅ Ajouté pour stockage cohérent
+                    'doc_similaire' => $doc['doc_name'],
+                    'scores_detail' => ['cosinus' => 1.0, 'jaccard' => 1.0, 'ngram' => 1.0],
+                ]], $isTest, $fullDocHash);
+            }
+        }
+
+        // ──────────────────────────────────────────────────────────────────────
+        // ÉTAPE 5 : Segmentation
+        // ──────────────────────────────────────────────────────────────────────
+        $segments = $this->segmenter->segment($fullText);
+        Log::info("PlagiatAnalyzerService: " . count($segments) . " segment(s) détecté(s).");
+
+        // ✅ EXPERT NLP : Pré-calcul du Vocabulaire et de l'IDF Globaux pour TOUTE l'analyse
+        // Cela garantit la cohérence des vecteurs entre toutes les comparaisons.
+        $allSegmentsTokens = [];
+        foreach ($segments as $s) {
+            $allSegmentsTokens = array_merge($allSegmentsTokens, $this->preprocessor->tokenizeAndStem($s['text']));
+        }
+        $globalVocabulary = $this->tfidf->buildGlobalVocabulary($corpus, $allSegmentsTokens);
+        $globalIDF = $this->tfidf->computeGlobalIDF($globalVocabulary, $corpus, $allSegmentsTokens);
+
+        $segmentsResult  = [];
+        $totalWordCount  = 0;
         $weightedScoreSum = 0;
 
-        // 4. Analyser chaque segment
+        // ──────────────────────────────────────────────────────────────────────
+        // ÉTAPE 6 : Analyse de chaque segment
+        // ──────────────────────────────────────────────────────────────────────
         foreach ($segments as $segment) {
             $segmentLabel = $segment['label'];
-            $segmentText = $segment['text'];
-            
-            // a. Préprocesser et Hacher (Fast Match)
-            $segmentTokens = $this->preprocessor->tokenizeAndStem($segmentText);
-            $segmentHash = $this->preprocessor->generateHash($segmentText);
+            $segmentText  = $segment['text'];
+
+            // Tokens et hash du segment
+            $segmentTokens    = $this->preprocessor->tokenizeAndStem($segmentText);
+            $segmentHash      = $this->preprocessor->generateHash($segmentText);
             $segmentWordCount = count($segmentTokens);
-            
+
+            Log::debug("PlagiatAnalyzerService: Segment '$segmentLabel' — {$segmentWordCount} tokens, hash=$segmentHash");
+
             if ($segmentWordCount === 0) {
-                // Segment vide
-                $segmentsResult[] = [
-                    'label' => $segmentLabel,
-                    'text' => $segmentText,
-                    'hash' => $segmentHash,
-                    'taux' => 0.0,
-                    'nb_mots' => 0,
-                    'doc_similaire' => null,
-                    'scores_detail' => ['cosinus' => 0.0, 'jaccard' => 0.0, 'ngram' => 0.0]
-                ];
+                $segmentsResult[] = $this->emptySegmentResult($segmentLabel, $segmentText, $segmentHash);
                 continue;
             }
 
-            // --- EXPERT : RECHERCHE DE CORRESPONDANCE EXACTE (HASH) ---
+            // ── FAST-MATCH NIVEAU SEGMENT (hash) ─────────────────────────────
             $isExactMatch = false;
-            foreach ($corpus as $doc) {
-                if (isset($doc['hash']) && $doc['hash'] === $segmentHash) {
-                    Log::debug("PlagiatAnalyzerService: Match exact détecté (Hash) pour le segment $segmentLabel avec " . $doc['doc_name']);
+
+            // ✅ FIX CRITIQUE : Comparer contre TOUT le corpus (Diagnostic 6)
+            // On ne filtre plus par granularity, car un chapitre peut être plagié depuis un rapport entier ou vice-versa.
+            $targetCorpus = $corpus;
+
+            foreach ($targetCorpus as $doc) {
+                if (!empty($doc['hash']) && $doc['hash'] === $segmentHash) {
+                    Log::info("PlagiatAnalyzerService: ✅ FAST-MATCH SEGMENT '$segmentLabel' avec " . $doc['doc_name']);
                     $segmentsResult[] = [
-                        'label' => $segmentLabel,
-                        'text' => $segmentText,
-                        'hash' => $segmentHash,
-                        'taux' => 100.0,
-                        'nb_mots' => $segmentWordCount,
+                        'label'         => $segmentLabel,
+                        'text'          => $segmentText,
+                        'hash'          => $segmentHash,
+                        'taux'          => 100.0,
+                        'nb_mots'       => $segmentWordCount,
+                        'tokens_preprocessed' => $segmentTokens, // ✅ Ajouté pour stockage cohérent
                         'doc_similaire' => $doc['doc_name'],
-                        'scores_detail' => ['cosinus' => 1.0, 'jaccard' => 1.0, 'ngram' => 1.0]
+                        'scores_detail' => ['cosinus' => 1.0, 'jaccard' => 1.0, 'ngram' => 1.0],
                     ];
-                    $totalWordCount += $segmentWordCount;
+                    $totalWordCount   += $segmentWordCount;
                     $weightedScoreSum += (100.0 * $segmentWordCount);
                     $isExactMatch = true;
                     break;
                 }
             }
 
-            if ($isExactMatch) continue;
+            if ($isExactMatch) {
+                continue;
+            }
 
-            // --- ANALYSE STATISTIQUE CLASSIQUE ---
+            // ── ANALYSE STATISTIQUE ───────────────────────────────────────────
+            $maxScore       = 0.0;
+            $bestDocName    = null;
+            $bestScoresDetail = ['cosinus' => 0.0, 'jaccard' => 0.0, 'ngram' => 0.0];
 
-            // b. Vecteur TF-IDF du segment
-            $segmentTfidf = $this->tfidf->computeTFIDF($segmentTokens, $corpusTokensList);
-
-            $maxScore = 0;
-            $bestDocName = null;
-            $bestScoresDetail = [
-                'cosinus' => 0.0,
-                'jaccard' => 0.0,
-                'ngram' => 0.0
-            ];
-
-            // c. Comparer contre chaque document du corpus
-            foreach ($corpus as $index => $doc) {
+            foreach ($targetCorpus as $doc) {
                 $docTokens = $doc['tokens'];
-                if (count($docTokens) === 0) continue;
+                if (count($docTokens) === 0) {
+                    continue;
+                }
 
-                $docTfidf = $this->tfidf->computeTFIDF($docTokens, $corpusTokensList);
+                // ✅ EXPERT NLP : Vectorisation stable sur le vocabulaire global
+                $segmentTfidf = $this->tfidf->computeTFIDFWithVocabulary(
+                    $segmentTokens,
+                    $globalVocabulary,
+                    $globalIDF
+                );
 
-                // Calculer les 3 scores
-                $cosineScore = $this->similarity->cosineSimilarity($segmentTfidf, $docTfidf);
-                $jaccardScore = $this->similarity->jaccardSimilarity($segmentTokens, $docTokens);
-                $ngramScore = $this->paraphrase->ngramSimilarity($segmentTokens, $docTokens, 3);
+                $docTfidf = $this->tfidf->computeTFIDFWithVocabulary(
+                    $docTokens,
+                    $globalVocabulary,
+                    $globalIDF
+                );
 
-                // Formule pondérée EXPERT : (0.6 * cos) + (0.1 * jaccard) + (0.3 * ngram)
-                // On privilégie le Cosinus (sémantique/lexical) et les N-grams (séquences)
-                $globalScore = (0.60 * $cosineScore) + (0.10 * $jaccardScore) + (0.30 * $ngramScore);
+                $cosineScore   = $this->similarity->cosineSimilarity($segmentTfidf, $docTfidf);
+                $jaccardScore  = $this->similarity->jaccardSimilarity($segmentTokens, $docTokens);
+                $ngramScore    = $this->paraphrase->ngramSimilarity($segmentTokens, $docTokens, 3);
+                $overlapScore  = $this->similarity->overlapSimilarity($segmentTokens, $docTokens);
 
-                Log::debug("PlagiatAnalyzerService: Comparaison $segmentLabel vs " . $doc['doc_name'] . " - Sc: " . round($globalScore, 4) . " (Cos: " . round($cosineScore, 4) . ", Jac: " . round($jaccardScore, 4) . ", Ngr: " . round($ngramScore, 4) . ")");
+                // ✅ Formule pondérée EXPERT (70/20/10)
+                // On garde l'Overlap comme garde-fou pour les documents inclus
+                $globalScore = (0.70 * $cosineScore) + (0.20 * $jaccardScore) + (0.10 * $ngramScore);
+
+                // Si le recouvrement ou le cosinus est total, on force le score
+                if ($overlapScore > 0.98 || $cosineScore > 0.98) {
+                    $globalScore = max($globalScore, $overlapScore, $cosineScore);
+                }
+
+                Log::info(sprintf(
+                    "PlagiatAnalyzerService: [SCORES DETAIL] %s vs %s — Global: %.2f%% (Cos: %.4f, Jac: %.4f, Ngr: %.4f, Ovlp: %.4f)",
+                    $segmentLabel,
+                    $doc['doc_name'],
+                    $globalScore * 100,
+                    $cosineScore,
+                    $jaccardScore,
+                    $ngramScore,
+                    $overlapScore
+                ));
 
                 if ($globalScore > $maxScore) {
-                    $maxScore = $globalScore;
-                    $bestDocName = $doc['doc_name'];
+                    $maxScore     = $globalScore;
+                    $bestDocName  = $doc['doc_name'];
                     $bestScoresDetail = [
                         'cosinus' => round($cosineScore, 4),
                         'jaccard' => round($jaccardScore, 4),
-                        'ngram' => round($ngramScore, 4)
+                        'ngram'   => round($ngramScore, 4),
                     ];
                 }
             }
 
-            // d. Stocker le résultat du segment
-            // Convertir le score max en pourcentage
             $tauxPourcentage = round($maxScore * 100, 2);
 
+            Log::info("PlagiatAnalyzerService: Segment '$segmentLabel' → taux={$tauxPourcentage}%, source={$bestDocName}");
+
             $segmentsResult[] = [
-                'label' => $segmentLabel,
-                'text' => $segmentText,
-                'hash' => $segmentHash,
-                'taux' => $tauxPourcentage,
-                'nb_mots' => $segmentWordCount,
+                'label'         => $segmentLabel,
+                'text'          => $segmentText,
+                'hash'          => $segmentHash,
+                'taux'          => $tauxPourcentage,
+                'nb_mots'       => $segmentWordCount,
+                'tokens_preprocessed' => $segmentTokens, // ✅ Ajouté pour stockage cohérent
                 'doc_similaire' => $bestDocName,
-                'scores_detail' => $bestScoresDetail
+                'scores_detail' => $bestScoresDetail,
             ];
 
-            $totalWordCount += $segmentWordCount;
+            $totalWordCount   += $segmentWordCount;
             $weightedScoreSum += ($tauxPourcentage * $segmentWordCount);
         }
 
-        // 5. Calculer le taux GLOBAL
-        $tauxGlobal = 0;
+        // ──────────────────────────────────────────────────────────────────────
+        // ÉTAPE 7 : Calcul du taux global (pondéré par le nombre de mots)
+        // ──────────────────────────────────────────────────────────────────────
+        $tauxGlobal = 0.0;
         if ($totalWordCount > 0) {
             $tauxGlobal = round($weightedScoreSum / $totalWordCount, 2);
         }
 
-        $decision = ($tauxGlobal > 20.0) ? 'rejete' : 'accepte';
+        // ✅ INDICATEUR DE STATUT (Expert)
+        $decision = 'DIFFERENT';
+        if ($tauxGlobal >= 98.0) {
+            $decision = 'EXACT_MATCH';
+        } elseif ($tauxGlobal >= 20.0) {
+            $decision = 'SIMILAR';
+        }
 
-        Log::info("PlagiatAnalyzerService: Analyse terminée. Taux global: $tauxGlobal% / Décision: $decision");
+        Log::info("PlagiatAnalyzerService: ✅ Analyse terminée — Taux global: {$tauxGlobal}% / Statut: {$decision}");
 
-        // 6. Retourner le rapport d'analyse
+        return $this->buildResult($tauxGlobal, $decision, $segmentsResult, $isTest, $fullDocHash);
+    }
+
+    /**
+     * Construit le tableau de résultat final.
+     */
+    private function buildResult(float $tauxGlobal, string $decision, array $segments, bool $isTest, ?string $hash = null): array
+    {
         return [
-            'taux_global' => $tauxGlobal,
-            'decision' => $decision,
-            'segments' => $segmentsResult,
-            'is_test' => $isTest,
-            'analyzed_at' => now()->format('Y-m-d H:i:s')
+            'taux_global'   => $tauxGlobal,
+            'decision'      => $decision,
+            'hash_document' => $hash,
+            'segments'      => $segments,
+            'is_test'       => $isTest,
+            'analyzed_at'   => now()->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    /**
+     * Retourne un résultat vide pour un segment sans tokens.
+     */
+    private function emptySegmentResult(string $label, string $text, string $hash): array
+    {
+        return [
+            'label'         => $label,
+            'text'          => $text,
+            'hash'          => $hash,
+            'taux'          => 0.0,
+            'nb_mots'       => 0,
+            'tokens_preprocessed' => [], // ✅ Ajouté pour stockage cohérent
+            'doc_similaire' => null,
+            'scores_detail' => ['cosinus' => 0.0, 'jaccard' => 0.0, 'ngram' => 0.0],
         ];
     }
 }

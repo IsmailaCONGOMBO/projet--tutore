@@ -10,7 +10,7 @@ class Rapport extends Model
 {
     protected $fillable = [
         'etudiant_id', 'theme_id', 'enseignant_id',
-        'titre', 'fichier_path', 'fichier_nom_original',
+        'titre', 'fichier_path', 'hash_document', 'fichier_nom_original',
         'fichier_taille', 'statut', 'taux_plagiat', 'seuil_plagiat',
         'note', 'commentaire', 'date_analyse', 'date_correction',
         'date_validation_admin', 'date_validation_finale', 'archive'

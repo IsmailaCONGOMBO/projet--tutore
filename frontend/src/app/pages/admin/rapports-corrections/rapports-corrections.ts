@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { RapportService } from '../../../core/services/rapport.service';
 
 @Component({
@@ -12,11 +13,13 @@ import { RapportService } from '../../../core/services/rapport.service';
 })
 export class AdminRapportsCorrections implements OnInit {
   private rapportService = inject(RapportService);
+  private router = inject(Router);
 
   rapports = signal<any[]>([]);
   loading = signal(true);
   searchTerm = signal('');
   filterStatut = signal('ALL');
+  selectedRapport = signal<any | null>(null);
 
   filteredRapports = computed(() => {
     const term = this.searchTerm().toLowerCase();
@@ -73,6 +76,14 @@ export class AdminRapportsCorrections implements OnInit {
 
   onFilter(event: any) {
     this.filterStatut.set(event.target.value);
+  }
+
+  selectRapport(r: any) {
+    this.selectedRapport.set(r);
+  }
+
+  voirPlagiat(id: number) {
+    this.router.navigate(['/admin/plagiat', id]);
   }
 
   download(id: number) {

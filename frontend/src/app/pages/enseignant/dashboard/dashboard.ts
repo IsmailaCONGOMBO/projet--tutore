@@ -23,8 +23,10 @@ export class EnseignantDashboard implements OnInit {
     this.rapportService.getRapportsAssignes().subscribe({
       next: (rapports: Rapport[]) => {
         this.nbAssignes.set(rapports.length);
-        this.nbCorriges.set(rapports.filter(r => r.statut === 'CORRIGE').length);
-        this.nbNotes.set(rapports.filter(r => r.statut === 'NOTE').length);
+        // "Corrigés" = Tout ce qui a été noté (soumis ou validé)
+        this.nbCorriges.set(rapports.filter(r => ['NOTE_SOUMISE', 'NOTE_VALIDEE_ADMIN', 'VALIDE_FINAL'].includes(r.statut)).length);
+        // "Notes Soumises" = Uniquement ceux en attente de validation admin (soumis par l'enseignant)
+        this.nbNotes.set(rapports.filter(r => r.statut === 'NOTE_SOUMISE').length);
       }
     });
   }

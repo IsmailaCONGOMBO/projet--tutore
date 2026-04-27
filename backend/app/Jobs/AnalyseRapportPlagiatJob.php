@@ -62,11 +62,14 @@ class AnalyseRapportPlagiatJob implements ShouldQueue
             // 2. Sauvegarder le résultat
             $reporter->saveAnalysis($this->rapportId, $result);
 
-            // 3. Mettre à jour le taux global sur le modèle Rapport lui-même pour un accès rapide
+            // 3. Mettre à jour le taux global et le HASH sur le modèle Rapport
+            // Le statut est déjà mis à jour par le PlagiatReportService, on s'assure juste de mettre les autres champs
+            $isPlagiarism = in_array($result['decision'], ['EXACT_MATCH', 'SIMILAR']);
             $rapport->update([
                 'taux_plagiat' => $result['taux_global'],
+                'hash_document' => $result['hash_document'] ?? null,
                 'date_analyse' => now(),
-                'statut' => $result['decision'] === 'accepte' ? 'VALIDE' : 'REJETE'
+                'statut' => $isPlagiarism ? 'REJETE_PLAGIAT' : 'VALIDE_PLAGIAT'
             ]);
 
             Log::info("AnalyseRapportPlagiatJob: Analyse terminée pour le rapport $this->rapportId. Taux: " . $result['taux_global'] . "%");
@@ -77,9 +80,8 @@ class AnalyseRapportPlagiatJob implements ShouldQueue
         } catch (\Exception $e) {
             Log::error("AnalyseRapportPlagiatJob: Erreur pour le rapport $this->rapportId - " . $e->getMessage());
             
-            $rapport->update([
-                'statut' => 'ERREUR_ANALYSE'
-            ]);
+            // Ne pas mettre à jour le statut avec ERREUR_ANALYSE car non présent dans l'ENUM
+            // On le laisse en EN_ATTENTE_ANALYSE_CHEF pour qu'il puisse être relancé
         }
     }
 }

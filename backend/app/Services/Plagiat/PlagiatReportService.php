@@ -60,8 +60,10 @@ class PlagiatReportService implements PlagiatReportServiceInterface
                     $chapitre->numero = $numero;
                 }
 
-                // Sauvegarder le texte brut pour les comparaisons futures (Indexation)
-                $chapitre->contenu_texte = $segment['text'] ?? null;
+                // ✅ STOCKAGE DES TOKENS PRÉPROCESSÉS (Option A) pour garantir la cohérence des futures analyses
+                $chapitre->contenu_texte = isset($segment['tokens_preprocessed']) 
+                    ? implode(' ', $segment['tokens_preprocessed']) 
+                    : ($segment['text'] ?? null);
                 $chapitre->hash = $segment['hash'] ?? null;
                 $chapitre->taux_plagiat = $segment['taux'];
                 $chapitre->nb_mots = $segment['nb_mots'];
@@ -74,8 +76,9 @@ class PlagiatReportService implements PlagiatReportServiceInterface
             // Mettre à jour le statut du rapport selon la décision
             $rapport = Rapport::find($rapportId);
             if ($rapport) {
-                // Utilisation du champ 'statut' tel que défini dans le schéma de la base de données
-                $rapport->statut = $analysisResult['decision'] === 'accepte' ? 'VALIDE' : 'REJETE';
+                // ✅ EXPERT NLP : Toute détection > seuil (SIMILAR ou EXACT_MATCH) est marquée REJETÉ
+                $isPlagiarism = in_array($analysisResult['decision'], ['EXACT_MATCH', 'SIMILAR']);
+                $rapport->statut = $isPlagiarism ? 'REJETE_PLAGIAT' : 'VALIDE_PLAGIAT';
                 $rapport->save();
             }
 
@@ -90,17 +93,26 @@ class PlagiatReportService implements PlagiatReportServiceInterface
     {
         $tauxGlobal = $analysisResult['taux_global'];
         $decision = $analysisResult['decision'];
-        $color = $decision === 'accepte' ? '#28a745' : '#dc3545';
-        $statusText = $decision === 'accepte' ? 'Accepté' : 'Rejeté';
+        
+        $color = '#28a745'; // Vert par défaut (DIFFERENT)
+        $statusText = 'Aucun plagiat significatif';
+
+        if ($decision === 'EXACT_MATCH') {
+            $color = '#dc3545';
+            $statusText = 'PLAGIAT TOTAL (100%)';
+        } elseif ($decision === 'SIMILAR') {
+            $color = '#fd7e14';
+            $statusText = 'PLAGIAT DÉTECTÉ (Suspect)';
+        }
 
         $html = "<div style=\"font-family: Arial, sans-serif; line-height: 1.6;\">\n";
-        $html .= "<h2>Rapport d'Analyse de Plagiat</h2>\n";
+        $html .= "<h2>Rapport d'Analyse de Plagiat (Expert Engine)</h2>\n";
         
-        $html .= "<h3>Taux Global : <span style=\"color: $color;\">$tauxGlobal %</span> - Statut : <strong>$statusText</strong></h3>\n";
+        $html .= "<h3>Taux Global : <span style=\"color: $color;\">$tauxGlobal %</span> - Status : <strong>$statusText</strong></h3>\n";
 
-        if ($decision === 'rejete') {
+        if ($decision !== 'DIFFERENT') {
             $html .= "<p style=\"color: #856404; background-color: #fff3cd; padding: 10px; border-radius: 5px;\">\n";
-            $html .= "Le taux de plagiat dépasse le seuil toléré de 20%. Ce rapport doit être révisé.\n";
+            $html .= "Le taux de plagiat dépasse le seuil toléré. Ce rapport doit être révisé par l'étudiant.\n";
             $html .= "</p>\n";
         }
 

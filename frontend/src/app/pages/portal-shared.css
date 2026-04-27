@@ -136,7 +136,7 @@
   border: 1px solid var(--off-white-2);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  overflow-x: auto;
 }
 .empty-state {
   padding: 3rem; text-align: center;

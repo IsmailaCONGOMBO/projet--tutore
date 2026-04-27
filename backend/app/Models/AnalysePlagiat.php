@@ -42,7 +42,7 @@ class AnalysePlagiat extends Model
 
     public function getStatutAttribute()
     {
-        return $this->decision === 'accepte' ? 'VALIDE' : ($this->decision === 'rejete' ? 'REJETE' : 'EN_COURS');
+        return in_array($this->decision, ['DIFFERENT', 'accepte']) ? 'VALIDE' : 'REJETE';
     }
 
     public function getAnalyseLeAttribute()

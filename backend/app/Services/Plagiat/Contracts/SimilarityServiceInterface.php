@@ -21,5 +21,12 @@ interface SimilarityServiceInterface
      * @param array $tokensB
      * @return float Score entre 0 et 1
      */
-    public function jaccardSimilarity(array $tokensA, array $tokensB): float;
+    /**
+     * Calcule la similarité de recouvrement (Overlap Coefficient).
+     *
+     * @param array $tokensA
+     * @param array $tokensB
+     * @return float Score entre 0 et 1
+     */
+    public function overlapSimilarity(array $tokensA, array $tokensB): float;
 }

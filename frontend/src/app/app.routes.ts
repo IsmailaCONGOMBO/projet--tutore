@@ -22,6 +22,8 @@ export const routes: Routes = [
       { path: 'notifications', loadComponent: () => import('./pages/admin/notifications/notifications').then(m => m.AdminNotifications) },
       { path: 'statistiques', loadComponent: () => import('./pages/admin/statistiques/statistiques').then(m => m.AdminStatistiques) },
       { path: 'parametres', loadComponent: () => import('./pages/admin/parametres/parametres').then(m => m.AdminParametres) },
+      { path: 'historique', loadComponent: () => import('./pages/admin/historique/historique').then(m => m.AdminHistorique) },
+      { path: 'plagiat/:id', loadComponent: () => import('./pages/chef/plagiat/plagiat').then(m => m.ChefPlagiat) },
     ]
   },
 

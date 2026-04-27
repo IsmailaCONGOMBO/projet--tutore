@@ -59,11 +59,51 @@ class PlagiarismService
 
         $taux = $totalWordsCount > 0 ? ($matchedWordsCount / $totalWordsCount) * 100 : 0;
 
-        return [
-            'taux' => round($taux, 2),
-            'passages' => $suspectPassages
-        ];
+    /**
+     * Compare deux documents par hachage (SHA-256) après normalisation.
+     * Détecte si deux documents sont strictement identiques (hors espaces/casse).
+     */
+    public function compareHash($text1, $text2)
+    {
+        $hash1 = $this->calculateHash($text1);
+        $hash2 = $this->calculateHash($text2);
+
+        return $hash1 === $hash2;
     }
+
+    /**
+     * Calcule le hash SHA-256 d'un texte après un nettoyage ultra-robuste.
+     * Ignore la casse, les accents, la ponctuation et TOUS les espaces.
+     */
+    public function calculateHash($text)
+    {
+        // 1. Passage en minuscule
+        $text = mb_strtolower($text, 'UTF-8');
+        
+        // 2. Suppression des accents
+        $text = $this->removeAccents($text);
+        
+        // 3. Suppression de TOUT ce qui n'est pas alphanumérique [a-z0-9]
+        // Cela élimine ponctuation, espaces, sauts de ligne, symboles...
+        $text = preg_replace('/[^a-z0-9]/', '', $text);
+
+        return hash('sha256', $text);
+    }
+
+    /**
+     * Supprime les accents d'une chaîne.
+     */
+    protected function removeAccents($str)
+    {
+        $unwanted_array = [
+            'š'=>'s', 'ž'=>'z', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
+            'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 
+            'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o', 'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ü'=>'u', 
+            'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y', 'œ'=>'oe'
+        ];
+        return strtr($str, $unwanted_array);
+    }
+}
 
     private function splitIntoSentences($text)
     {

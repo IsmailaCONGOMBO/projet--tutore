@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Filiere extends Model
 {
-    protected $fillable = ['nom', 'code', 'description'];
+    protected $fillable = ['nom', 'code', 'description', 'active'];
 
     public function etudiants(): HasMany
     {

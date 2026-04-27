@@ -1,5 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { StatistiqueService, StatistiqueGlobale, EvolutionData } from '../../../core/services/statistique.service';
 
 @Component({
@@ -25,28 +26,35 @@ export class AdminStatistiques implements OnInit {
   chargerStatistiques() {
     this.loading = true;
     this.error = null;
+    let pending = 2;
+
+    const checkDone = () => {
+      pending--;
+      if (pending === 0) {
+        this.loading = false;
+      }
+    };
     
-    // Charger les stats globales
     this.statistiqueService.getStatistiquesGlobales().subscribe({
       next: (data) => {
         this.statistiques = data;
-        // Ne pas mettre loading = false ici pour attendre l'évolution
+        checkDone();
       },
       error: (err) => {
-        console.error('Erreur stats globales:', err);
-        this.error = 'Impossible de charger les statistiques globales';
+        console.error('Erreur stats:', err);
+        this.error = 'Impossible de charger les statistiques';
+        checkDone();
       }
     });
 
-    // Charger l'évolution
     this.statistiqueService.getEvolutionRapports().subscribe({
       next: (data) => {
         this.evolution = data;
-        this.loading = false;
+        checkDone();
       },
       error: (err) => {
-        console.error('Erreur évolution:', err);
-        this.loading = false;
+        console.error('Erreur evolution:', err);
+        checkDone();
       }
     });
   }

@@ -1,0 +1,55 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Historique d'Activité</h1>
+      <p class="page-subtitle">Suivi des actions administratives effectuées sur la plateforme.</p>
+    </div>
+    <button class="btn btn-outline" (click)="chargerHistorique()">
+      <span class="material-icons">refresh</span>
+      Actualiser
+    </button>
+  </div>
+
+  <div class="activity-feed">
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement de l'historique...</p>
+      </div>
+    } @else {
+      @for (action of actions(); track action.id) {
+        <div class="activity-item">
+          <div class="activity-icon" [ngClass]="getActionClass(action.action)">
+            <span class="material-icons">
+              {{ action.action.includes('NOTE') ? 'description' : 
+                 action.action.includes('FILIERE') ? 'category' : 
+                 action.action.includes('UTILISATEUR') ? 'person' : 'settings' }}
+            </span>
+          </div>
+          
+          <div class="activity-content">
+            <div class="activity-header">
+              <span class="activity-user">{{ action.user?.name || 'Système' }}</span>
+              <span class="activity-date">{{ action.created_at | date:'dd MMM yyyy à HH:mm' }}</span>
+            </div>
+            
+            <div class="activity-title">
+              <strong>{{ getActionLabel(action.action) }}</strong>
+            </div>
+            
+            <p class="activity-details">{{ action.details }}</p>
+            
+            <div class="activity-footer">
+              <span class="ip-info">IP: {{ action.ip_address || 'N/A' }}</span>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">
+          <span class="material-icons">history</span>
+          <p>Aucune activité enregistrée pour le moment.</p>
+        </div>
+      }
+    }
+  </div>
+</div>

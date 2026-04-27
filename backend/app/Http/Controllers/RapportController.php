@@ -19,8 +19,16 @@ class RapportController extends Controller
     {
         $request->validate(['fichier' => 'required|file|mimes:pdf|max:20480']);
         
-        // Simulation d'une analyse (sera remplacé par l'algorithme choisi)
-        $taux = rand(5, 45); 
+        // Utilisation du vrai moteur pour le test (sans sauvegarde en BDD)
+        $path = $request->file('fichier')->store('temp', 'local');
+        $fullPath = storage_path('app/' . $path);
+        
+        $analyzer = app(\App\Services\Plagiat\Contracts\PlagiatAnalyzerServiceInterface::class);
+        $result = $analyzer->analyze($fullPath, true); // isTest = true
+        
+        @unlink($fullPath);
+
+        $taux = $result['taux_global'];
 
         return response()->json([
             'message' => 'Analyse de test terminée.',
@@ -77,46 +85,27 @@ class RapportController extends Controller
             return response()->json(['message' => 'Ce rapport ne peut plus être analysé.'], 400);
         }
 
-        // Logique de plagiat (simulation par rapport à d'autres fichiers)
-        $taux = rand(5, 40); 
-        $statut = ($taux > $rapport->seuil_plagiat) ? 'REJETE_PLAGIAT' : 'VALIDE_PLAGIAT';
-
-        $rapport->update([
-            'taux_plagiat' => $taux,
-            'statut' => $statut,
-            'date_analyse' => now()
-        ]);
-
-        // Créer un enregistrement détaillé pour l'interface étudiant
-        \App\Models\AnalysePlagiat::create([
-            'rapport_id' => $rapport->id,
-            'taux_global' => $taux,
-            'decision' => ($statut === 'VALIDE_PLAGIAT') ? 'accepte' : 'rejete',
-            'payload_json' => [
-                'passages_suspects' => [
-                    [
-                        'texte' => "Analyse de conformité effectuée par le département.",
-                        'source_titre' => "Archives du département",
-                        'similarite' => $taux
-                    ]
-                ]
-            ]
-        ]);
+        // Utilisation du VRAI job d'analyse de manière synchrone pour que le frontend ait le résultat
+        // (En production lourde, on le ferait en asynchrone, mais le frontend attend la réponse immédiate)
+        \App\Jobs\AnalyseRapportPlagiatJob::dispatchSync($rapport->id);
+        
+        // Rafraîchir le rapport pour obtenir les résultats mis à jour
+        $rapport->refresh();
 
         // Notification
         Notification::create([
             'user_id' => $rapport->etudiant->user_id,
             'titre' => 'Résultat d\'analyse de plagiat',
-            'message' => $statut === 'REJETE_PLAGIAT' 
-                ? "Votre rapport a été rejeté (Taux: $taux%)." 
-                : "Votre rapport est recevable (Taux: $taux%).",
+            'message' => $rapport->statut === 'REJETE_PLAGIAT' 
+                ? "Votre rapport a été rejeté (Taux: {$rapport->taux_plagiat}%)." 
+                : "Votre rapport est recevable (Taux: {$rapport->taux_plagiat}%).",
             'type' => 'rapport'
         ]);
 
         return response()->json([
-            'message' => 'Analyse effectuée.',
-            'taux' => $taux,
-            'statut' => $statut
+            'message' => 'Analyse effectuée avec succès.',
+            'taux' => $rapport->taux_plagiat,
+            'statut' => $rapport->statut
         ]);
     }
 
@@ -128,7 +117,7 @@ class RapportController extends Controller
         $request->validate(['enseignant_id' => 'required|exists:enseignants,id']);
         
         $rapport = Rapport::findOrFail($id);
-        if ($rapport->statut !== 'VALIDE_PLAGIAT') {
+        if (!in_array($rapport->statut, ['VALIDE_PLAGIAT', 'ASSIGNE_ENSEIGNANT'])) {
             return response()->json(['message' => 'Le rapport doit d\'abord être validé pour plagiat.'], 400);
         }
 
@@ -149,7 +138,14 @@ class RapportController extends Controller
         if (!$user->enseignant) return response()->json([]);
 
         $rapports = Rapport::where('enseignant_id', $user->enseignant->id)
-            ->whereIn('statut', ['ASSIGNE_ENSEIGNANT', 'NOTE_SOUMISE'])
+            ->whereIn('statut', [
+                'ASSIGNE_ENSEIGNANT', 
+                'NOTE_SOUMISE', 
+                'NOTE_VALIDEE_ADMIN', 
+                'NOTE_REJETEE_ADMIN',
+                'VALIDE_FINAL',
+                'REJETE_FINAL'
+            ])
             ->with('etudiant.user')
             ->get();
 

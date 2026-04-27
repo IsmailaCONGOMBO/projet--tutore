@@ -115,6 +115,24 @@ class ThemeController extends Controller
     }
 
     /**
+     * Pour le Chef : Récupérer les statistiques du tableau de bord
+     */
+    public function getStatsChef(Request $request)
+    {
+        $enAttente = Theme::where('statut', 'EN_ATTENTE_CHEF')->count();
+        $valides = Theme::whereIn('statut', ['VALIDE_CHEF', 'VALIDE_ADMIN'])->count();
+        $rejetes = Theme::whereIn('statut', ['REJETE_CHEF', 'REJETE_ADMIN'])->count();
+        $total = Theme::count();
+
+        return response()->json([
+            'en_attente' => $enAttente,
+            'valides' => $valides,
+            'rejetes' => $rejetes,
+            'total' => $total
+        ]);
+    }
+
+    /**
      * Pour le Chef : Récupérer les thèmes en attente
      */
     public function getThemesEnAttenteChef(Request $request)
