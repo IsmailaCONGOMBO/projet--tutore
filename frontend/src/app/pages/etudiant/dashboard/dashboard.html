@@ -4,7 +4,12 @@
   <div class="page-header">
     <div>
       <h1>Bonjour, <span>{{ user.name || 'Étudiant' }}</span></h1>
-      <p>Voici un résumé de votre activité sur la plateforme.</p>
+      <p>
+        {{ user.etudiant?.filiere?.nom || 'Filière non définie' }}
+        @if (user.etudiant?.promotion) {
+          • {{ user.etudiant.promotion.libelle }}
+        }
+      </p>
     </div>
   </div>
 

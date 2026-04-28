@@ -42,7 +42,7 @@
       <div class="form-group">
         <label>Filière concernée</label>
         <select [(ngModel)]="notificationForm().filiere_id">
-          @for (f of filieres; track f.id) {
+          @for (f of filieres(); track f.id) {
             <option [value]="f.id">{{ f.nom }}</option>
           }
         </select>

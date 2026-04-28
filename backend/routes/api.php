@@ -49,13 +49,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/rapports/valider-admin/{id}', [RapportController::class, 'validerNoteAdmin']);
     Route::post('/rapports/rejeter-admin/{id}', [RapportController::class, 'rejeterNoteAdmin']);
     Route::post('/rapports/decision-finale/{id}', [RapportController::class, 'decisionFinaleChef']);
+    Route::post('/rapports/archiver-promo', [RapportController::class, 'archiverParPromotion']);
 
     // Analyse de Plagiat (Legacy/Compat)
     Route::get('/analyses/derniere', [AnalyseController::class, 'derniere']);
 
     // Statistiques (Directeur Adjoint)
     Route::get('/statistiques', [StatistiqueController::class, 'index']);
-    Route::get('/statistiques/evolution', [StatistiqueController::class, 'evolution']);
+    Route::get('/statistiques/filiere', [StatistiqueController::class, 'filiere']);
+    Route::get('/statistiques/promotion', [StatistiqueController::class, 'promotion']);
+    Route::get('/statistiques/global', [StatistiqueController::class, 'global']);
+
+    Route::apiResource('promotions', \App\Http\Controllers\PromotionController::class);
 
     // Gestion des Thèmes (Étudiant)
     Route::post('/themes', [ThemeController::class, 'soumettreTheme']);

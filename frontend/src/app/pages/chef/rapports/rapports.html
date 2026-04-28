@@ -4,6 +4,28 @@
     <p>Gérez le cycle de vie des rapports étudiants du département.</p>
   </div>
 
+  <!-- Filtres -->
+  <div class="filters-card card">
+    <div class="filter-group">
+      <label>Filière :</label>
+      <select [(ngModel)]="filterFiliere" (change)="filterFiliere.set(+$any($event).target.value)">
+        <option [value]="0">Toutes les filières</option>
+        @for (f of filieres(); track f.id) {
+          <option [value]="f.id">{{ f.nom }}</option>
+        }
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Promotion :</label>
+      <select [(ngModel)]="filterPromotion" (change)="filterPromotion.set(+$any($event).target.value)">
+        <option [value]="0">Toutes les promotions</option>
+        @for (p of promotions(); track p.id) {
+          <option [value]="p.id">{{ p.libelle }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
   <div class="main-layout">
     <!-- Liste des rapports -->
     <div class="list-section">
@@ -20,7 +42,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (r of rapports(); track r.id) {
+            @for (r of filteredRapports(); track r.id) {
               <tr [class.selected]="selectedRapport()?.id === r.id" (click)="selectRapport(r)">
                 <td>{{ r.titre }}</td>
                 <td>{{ r.etudiant?.user?.name }}</td>

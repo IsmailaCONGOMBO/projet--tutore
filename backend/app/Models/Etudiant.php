@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Etudiant extends Model
 {
     protected $fillable = [
-        'user_id', 'filiere_id', 'matricule', 'niveau', 'annee_academique'
+        'user_id', 'filiere_id', 'promotion_id', 'matricule', 'niveau', 'annee_academique'
     ];
 
     public function user(): BelongsTo
@@ -20,6 +20,11 @@ class Etudiant extends Model
     public function filiere(): BelongsTo
     {
         return $this->belongsTo(Filiere::class);
+    }
+
+    public function promotion(): BelongsTo
+    {
+        return $this->belongsTo(Promotion::class);
     }
 
     public function themes(): HasMany

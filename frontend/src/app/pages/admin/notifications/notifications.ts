@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NotificationService, NotificationRequest } from '../../../core/services/notification.service';
+import { FiliereService, Filiere } from '../../../core/services/filiere.service';
 
 @Component({
   selector: 'app-admin-notifications',
@@ -12,6 +13,7 @@ import { NotificationService, NotificationRequest } from '../../../core/services
 })
 export class AdminNotifications implements OnInit {
   private notificationService = inject(NotificationService);
+  private filiereService = inject(FiliereService);
   
   loading = signal(false);
   success = signal<string | null>(null);
@@ -45,6 +47,14 @@ export class AdminNotifications implements OnInit {
 
   ngOnInit() {
     this.chargerNotifications();
+    this.chargerFilieres();
+  }
+
+  chargerFilieres() {
+    this.filiereService.getFilieres().subscribe({
+      next: (data) => this.filieres.set(data),
+      error: (err) => console.error('Erreur chargement filieres:', err)
+    });
   }
 
   chargerNotifications() {
@@ -140,13 +150,8 @@ export class AdminNotifications implements OnInit {
     });
   }
 
-  // Simuler des filières (à remplacer par un vrai service)
-  filieres = [
-    { id: 1, nom: 'Génie Informatique' },
-    { id: 2, nom: 'Génie Civil' },
-    { id: 3, nom: 'Génie Électrique' },
-    { id: 4, nom: 'Management' }
-  ];
+  // Liste des filières chargées dynamiquement
+  filieres = signal<Filiere[]>([]);
 
   // Getters pour simplifier le template
   getTypeLabel(): string {

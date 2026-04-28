@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+class Historique extends Model
+{
     protected $fillable = [
         'user_id', 'action', 'cible_type', 'cible_id', 'details', 'ip_address'
     ];
@@ -12,3 +15,4 @@ use Illuminate\Database\Eloquent\Model;
     {
         return $this->belongsTo(User::class);
     }
+}

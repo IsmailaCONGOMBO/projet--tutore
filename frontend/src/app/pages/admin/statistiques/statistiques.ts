@@ -1,7 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { forkJoin } from 'rxjs';
-import { StatistiqueService, StatistiqueGlobale, EvolutionData } from '../../../core/services/statistique.service';
+import { StatistiqueService, StatistiqueGlobale, FiliereStat, PromotionStat } from '../../../core/services/statistique.service';
+import Chart from 'chart.js/auto';
 
 @Component({
   selector: 'app-admin-statistiques',
@@ -10,53 +11,94 @@ import { StatistiqueService, StatistiqueGlobale, EvolutionData } from '../../../
   templateUrl: './statistiques.html',
   styleUrl: './statistiques.css'
 })
-export class AdminStatistiques implements OnInit {
+export class AdminStatistiques implements OnInit, AfterViewInit {
   private statistiqueService = inject(StatistiqueService);
+  
+  @ViewChild('filiereChart') filiereChartRef!: ElementRef;
+  @ViewChild('promotionChart') promotionChartRef!: ElementRef;
   
   loading = true;
   error: string | null = null;
   
   statistiques: StatistiqueGlobale | null = null;
-  evolution: EvolutionData[] = [];
+  filiereStats: FiliereStat[] = [];
+  promotionStats: PromotionStat[] = [];
 
   ngOnInit() {
-    this.chargerStatistiques();
+    this.chargerDonnees();
   }
 
-  chargerStatistiques() {
+  ngAfterViewInit() {
+    // Initial charts will be created after data is loaded
+  }
+
+  chargerDonnees() {
     this.loading = true;
     this.error = null;
-    let pending = 2;
-
-    const checkDone = () => {
-      pending--;
-      if (pending === 0) {
-        this.loading = false;
-      }
-    };
     
-    this.statistiqueService.getStatistiquesGlobales().subscribe({
-      next: (data) => {
-        this.statistiques = data;
-        checkDone();
+    forkJoin({
+      global: this.statistiqueService.getGlobalAdvancedStats(),
+      filiere: this.statistiqueService.getFiliereStats(),
+      promotion: this.statistiqueService.getPromotionStats()
+    }).subscribe({
+      next: (res) => {
+        this.statistiques = res.global;
+        this.filiereStats = res.filiere;
+        this.promotionStats = res.promotion;
+        this.loading = false;
+        
+        // Wait for DOM update
+        setTimeout(() => this.initCharts(), 0);
       },
       error: (err) => {
         console.error('Erreur stats:', err);
-        this.error = 'Impossible de charger les statistiques';
-        checkDone();
+        this.error = 'Impossible de charger les statistiques détaillées';
+        this.loading = false;
       }
     });
+  }
 
-    this.statistiqueService.getEvolutionRapports().subscribe({
-      next: (data) => {
-        this.evolution = data;
-        checkDone();
-      },
-      error: (err) => {
-        console.error('Erreur evolution:', err);
-        checkDone();
-      }
-    });
+  initCharts() {
+    if (this.filiereChartRef) {
+      new Chart(this.filiereChartRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: this.filiereStats.map(f => f.nom),
+          datasets: [{
+            label: 'Taux de Plagiat (%)',
+            data: this.filiereStats.map(f => f.taux_plagiat_moyen),
+            backgroundColor: this.filiereStats.map(f => this.getPlagiatColor(f.taux_plagiat_moyen)),
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
+    }
+
+    if (this.promotionChartRef) {
+      new Chart(this.promotionChartRef.nativeElement, {
+        type: 'line',
+        data: {
+          labels: this.promotionStats.map(p => p.annee).reverse(),
+          datasets: [{
+            label: 'Taux de Plagiat Moyen',
+            data: this.promotionStats.map(p => p.taux_plagiat_moyen).reverse(),
+            borderColor: '#6366f1',
+            tension: 0.4,
+            fill: true,
+            backgroundColor: 'rgba(99, 102, 241, 0.1)'
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
+    }
   }
 
   getPlagiatColor(taux: number): string {
@@ -69,11 +111,5 @@ export class AdminStatistiques implements OnInit {
     if (taux < 20) return 'Faible';
     if (taux < 40) return 'Moyen';
     return 'Élevé';
-  }
-
-  getProgressPercentage(count: number): number {
-    if (!this.statistiques?.rapports_par_filiere?.length) return 0;
-    const maxCount = Math.max(...this.statistiques.rapports_par_filiere.map(f => f.count));
-    return maxCount > 0 ? (count / maxCount) * 100 : 0;
   }
 }

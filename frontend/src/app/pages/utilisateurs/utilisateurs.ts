@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { SlicePipe } from '@angular/common';
 import { UserService, User } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
+import { FiliereService, Filiere } from '../../core/services/filiere.service';
+import { PromotionService, Promotion } from '../../core/services/promotion.service';
 
 @Component({
   selector: 'app-utilisateurs',
@@ -12,13 +14,17 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrl: './utilisateurs.css'
 })
 export class Utilisateurs implements OnInit {
-  private userSvc = inject(UserService);
-  private auth    = inject(AuthService);
+  private userSvc      = inject(UserService);
+  private auth         = inject(AuthService);
+  private filiereSvc   = inject(FiliereService);
+  private promotionSvc = inject(PromotionService);
 
   users    = signal<User[]>([]);
   loading  = signal(false);
   error    = signal('');
   success  = signal('');
+  filieres  = signal<Filiere[]>([]);
+  promotions = signal<Promotion[]>([]);
 
   showModal  = signal(false);
   isEditing  = signal(false);
@@ -44,7 +50,19 @@ export class Utilisateurs implements OnInit {
     etudiant:         'Étudiant',
   };
 
-  ngOnInit() { this.load(); }
+  ngOnInit() { 
+    this.load(); 
+    this.loadFilieres();
+    this.loadPromotions();
+  }
+
+  loadFilieres() {
+    this.filiereSvc.getFilieres().subscribe(data => this.filieres.set(data));
+  }
+
+  loadPromotions() {
+    this.promotionSvc.getPromotions().subscribe(data => this.promotions.set(data));
+  }
 
   load() {
     this.loading.set(true);
@@ -56,13 +74,25 @@ export class Utilisateurs implements OnInit {
 
   openCreate() {
     this.form = this.emptyForm();
+    
+    // Essayer de présélectionner la promotion 2025-2026
+    const defaultProm = this.promotions().find(p => 
+      p.libelle.includes('2025-2026') || p.annee === 2025
+    );
+    if (defaultProm) {
+      this.form.promotion_id = defaultProm.id;
+    }
+
     this.isEditing.set(false);
     this.showModal.set(true);
     this.error.set('');
   }
 
   openEdit(u: User) {
-    this.form = { ...u, password: '' };
+    // Extraire filiere_id et promotion_id du profil
+    const filiere_id   = u.etudiant?.filiere_id   || u.enseignant?.filiere_id;
+    const promotion_id = u.etudiant?.promotion_id;
+    this.form = { ...u, password: '', filiere_id, promotion_id };
     this.isEditing.set(true);
     this.showModal.set(true);
     this.error.set('');
@@ -86,6 +116,8 @@ export class Utilisateurs implements OnInit {
       name: this.form.name,
       email: this.form.email,
       role: this.form.role,
+      filiere_id: this.form.filiere_id,
+      promotion_id: this.form.promotion_id
     };
     if (this.form.password) payload['password'] = this.form.password;
 

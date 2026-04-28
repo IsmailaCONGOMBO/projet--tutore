@@ -7,6 +7,10 @@ export interface User {
   email: string;
   role: 'admin' | 'etudiant' | 'enseignant' | 'chef_departement';
   password?: string;
+  filiere_id?: number;
+  promotion_id?: number;
+  etudiant?: any;
+  enseignant?: any;
   created_at?: string;
 }
 

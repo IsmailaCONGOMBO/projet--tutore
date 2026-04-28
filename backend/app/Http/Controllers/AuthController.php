@@ -19,6 +19,14 @@ class AuthController extends Controller
         }
 
         $user  = Auth::user();
+        
+        // Charger les relations selon le rôle
+        if ($user->role === 'etudiant') {
+            $user->load('etudiant.filiere', 'etudiant.promotion');
+        } elseif ($user->role === 'enseignant') {
+            $user->load('enseignant.filiere');
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

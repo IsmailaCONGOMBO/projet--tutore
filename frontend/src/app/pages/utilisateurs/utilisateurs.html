@@ -72,6 +72,16 @@
                 <td class="td-email">{{ u.email }}</td>
                 <td>
                   <span class="badge badge-{{ u.role }}">{{ roleLabels[u.role] }}</span>
+                  @if (u.etudiant?.filiere) {
+                    <div class="user-subtext">
+                      {{ u.etudiant.filiere.nom }}
+                      @if (u.etudiant.promotion) {
+                        <span class="prom-label">({{ u.etudiant.promotion.libelle }})</span>
+                      }
+                    </div>
+                  } @else if (u.enseignant?.filiere) {
+                    <div class="user-subtext">{{ u.enseignant.filiere.nom }}</div>
+                  }
                 </td>
                 <td class="td-date">{{ u.created_at | slice:0:10 }}</td>
                 <td class="td-actions">
@@ -138,6 +148,35 @@
               placeholder="{{ isEditing() ? '••••••••' : 'Minimum 4 caractères' }}" />
           </div>
         </div>
+
+        @if (form.role === 'etudiant' || form.role === 'enseignant' || form.role === 'chef_departement') {
+          <div class="form-row optional-fields">
+            <div class="form-group">
+              <label>
+                {{ form.role === 'etudiant' ? 'Filière concernée' : 'Département concerné' }}
+                <span class="req">*</span>
+              </label>
+              <select [(ngModel)]="form.filiere_id" name="filiere_id" required>
+                <option [value]="undefined" disabled selected>Choisir une filière...</option>
+                @for (f of filieres(); track f.id) {
+                  <option [value]="f.id">{{ f.nom }}</option>
+                }
+              </select>
+            </div>
+
+            @if (form.role === 'etudiant') {
+              <div class="form-group">
+                <label>Promotion <span class="req">*</span></label>
+                <select [(ngModel)]="form.promotion_id" name="promotion_id" required>
+                  <option [value]="undefined" disabled selected>Choisir une promotion...</option>
+                  @for (p of promotions(); track p.id) {
+                    <option [value]="p.id">{{ p.libelle }} ({{ p.annee }})</option>
+                  }
+                </select>
+              </div>
+            }
+          </div>
+        }
 
         <div class="modal-footer">
           <button type="button" class="btn-cancel" (click)="closeModal()">Annuler</button>

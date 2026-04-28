@@ -18,7 +18,7 @@
   @if (error) {
     <div class="alert-error">
       {{ error }}
-      <button class="drop-link" (click)="chargerStatistiques()" style="background:none; border:none; cursor:pointer; margin-left: 10px;">Réessayer</button>
+      <button class="drop-link" (click)="chargerDonnees()" style="background:none; border:none; cursor:pointer; margin-left: 10px;">Réessayer</button>
     </div>
   }
 
@@ -48,26 +48,22 @@
       </div>
 
       <div class="kpi-card">
-        <div class="kpi-icon material-icons">history</div>
+        <div class="kpi-icon material-icons">groups</div>
         <div class="kpi-content">
-          <h3 class="kpi-title">Notes en Attente</h3>
-          <p class="kpi-value">{{ statistiques.notes_en_attente }}</p>
-          <span class="kpi-label">Action requise</span>
+          <h3 class="kpi-title">Total Étudiants</h3>
+          <p class="kpi-value">{{ statistiques.total_etudiants }}</p>
+          <span class="kpi-label">Utilisateurs actifs</span>
         </div>
       </div>
 
-      <div class="kpi-card">
-        <div class="kpi-icon material-icons">query_stats</div>
+      <div class="kpi-card highlight">
+        <div class="kpi-icon material-icons" style="color: #10b981;">workspace_premium</div>
         <div class="kpi-content">
-          <h3 class="kpi-title">Taux Validation</h3>
-          <p class="kpi-value">
-            @if (statistiques.notes_validees + statistiques.notes_rejetees > 0) {
-              {{ ((statistiques.notes_validees / (statistiques.notes_validees + statistiques.notes_rejetees)) * 100).toFixed(1) }}%
-            } @else {
-              0%
-            }
+          <h3 class="kpi-title">Meilleure Filière</h3>
+          <p class="kpi-value" style="font-size: 1.4rem;">
+            {{ statistiques.meilleure_filiere?.nom || 'N/A' }}
           </p>
-          <span class="kpi-label">Efficacité correction</span>
+          <span class="kpi-label">Taux: {{ statistiques.meilleure_filiere?.taux_moyen?.toFixed(1) || 0 }}%</span>
         </div>
       </div>
     </div>
@@ -77,54 +73,17 @@
       
       <!-- Rapports par Filière -->
       <div class="chart-card">
-        <h3 class="chart-title">Répartition par Filière</h3>
+        <h3 class="chart-title">Indice de Plagiat par Filière</h3>
         <div class="chart-content">
-          @for (filiere of statistiques.rapports_par_filiere; track filiere.filiere) {
-            <div class="filiere-item">
-              <div class="filiere-info">
-                <span class="filiere-name">{{ filiere.filiere }}</span>
-                <span class="filiere-count">{{ filiere.count }} rapports</span>
-              </div>
-              <div class="progress-bar">
-                <div 
-                  class="progress-fill" 
-                  [style.width.%]="getProgressPercentage(filiere.count)"
-                  [style.background-color]="getPlagiatColor(filiere.taux_plagiat)">
-                </div>
-              </div>
-              <div class="plagiat-rate" [style.color]="getPlagiatColor(filiere.taux_plagiat)">
-                {{ filiere.taux_plagiat.toFixed(1) }}% de plagiat (moy.)
-              </div>
-            </div>
-          }
+          <canvas #filiereChart></canvas>
         </div>
       </div>
 
-      <!-- Évolution Temporelle -->
+      <!-- Évolution par Promotion -->
       <div class="chart-card">
-        <h3 class="chart-title">Évolution Mensuelle</h3>
+        <h3 class="chart-title">Évolution par Promotion</h3>
         <div class="chart-content">
-          <div class="evolution-chart">
-            @for (data of evolution; track data.mois) {
-              <div class="month-bar">
-                <div class="bar-container">
-                  <div class="bar rapports-bar" [style.height.%]="(data.rapports / 35) * 100" [title]="data.rapports + ' rapports'"></div>
-                  <div class="bar plagiat-bar" [style.height.%]="(data.plagiat / 35) * 100" [title]="data.plagiat + '% plagiat'"></div>
-                </div>
-                <div class="month-label">{{ data.mois }}</div>
-              </div>
-            }
-          </div>
-          <div class="chart-legend">
-            <div class="legend-item">
-              <span class="legend-color rapports-color"></span>
-              <span>Dépôts</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-color plagiat-color"></span>
-              <span>Indice Plagiat</span>
-            </div>
-          </div>
+          <canvas #promotionChart></canvas>
         </div>
       </div>
     </div>
@@ -135,23 +94,23 @@
       <div class="validation-stats">
         <div class="stat-item">
           <div class="stat-circle validated">
-            {{ statistiques.notes_validees }}
+            {{ statistiques.rapports_valides }}
           </div>
-          <span class="badge badge-VALIDE">Notes Validées</span>
-        </div>
-        
-        <div class="stat-item">
-          <div class="stat-circle pending">
-            {{ statistiques.notes_en_attente }}
-          </div>
-          <span class="badge badge-EN_ATTENTE">En attente</span>
+          <span class="badge badge-VALIDE">Rapports Validés</span>
         </div>
         
         <div class="stat-item">
           <div class="stat-circle rejected">
-            {{ statistiques.notes_rejetees }}
+            {{ statistiques.rapports_rejetes }}
           </div>
-          <span class="badge badge-REJETE">Révisions</span>
+          <span class="badge badge-REJETE">Rapports Rejetés</span>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-circle pending">
+            {{ statistiques.total_rapports - (statistiques.rapports_valides || 0) - (statistiques.rapports_rejetes || 0) }}
+          </div>
+          <span class="badge badge-EN_ATTENTE">En cours / Attente</span>
         </div>
       </div>
     </div>

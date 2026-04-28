@@ -68,40 +68,92 @@ class StatistiqueController extends Controller
     }
 
     /**
-     * Évolution mensuelle des rapports et taux de plagiat
+     * Statistiques par filière
      */
-    public function evolution(Request $request)
+    public function filiere(Request $request)
     {
         if ($request->user()->role !== 'admin') {
             return response()->json(['message' => 'Non autorisé.'], 403);
         }
 
-        // Données des 6 derniers mois
-        $evolution = DB::table('rapports')
+        $stats = DB::table('filieres')
+            ->leftJoin('etudiants', 'filieres.id', '=', 'etudiants.filiere_id')
+            ->leftJoin('rapports', 'etudiants.id', '=', 'rapports.etudiant_id')
             ->select(
-                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as mois'),
-                DB::raw('COUNT(*) as rapports')
+                'filieres.id',
+                'filieres.nom',
+                DB::raw('COUNT(rapports.id) as total_rapports'),
+                DB::raw('AVG(COALESCE(rapports.taux_plagiat, 0)) as taux_plagiat_moyen')
             )
-            ->where('created_at', '>=', now()->subMonths(6))
-            ->groupBy(DB::raw('DATE_FORMAT(created_at, "%Y-%m")'))
-            ->orderBy('mois')
+            ->groupBy('filieres.id', 'filieres.nom')
             ->get();
 
-        // Calculer le taux de plagiat moyen par mois
-        $result = [];
-        foreach ($evolution as $data) {
-            $tauxPlagiat = DB::table('rapports')
-                ->leftJoin('analyses_plagiat', 'rapports.id', '=', 'analyses_plagiat.rapport_id')
-                ->where(DB::raw('DATE_FORMAT(rapports.created_at, "%Y-%m")'), $data->mois)
-                ->avg(DB::raw('COALESCE(rapports.taux_plagiat, analyses_plagiat.taux_global, 0)')) ?? 0;
+        return response()->json($stats);
+    }
 
-            $result[] = [
-                'mois' => date('M', strtotime($data->mois . '-01')),
-                'rapports' => $data->rapports,
-                'plagiat' => round($tauxPlagiat, 1)
-            ];
+    /**
+     * Statistiques par promotion
+     */
+    public function promotion(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Non autorisé.'], 403);
         }
 
-        return response()->json($result);
+        $stats = DB::table('promotions')
+            ->leftJoin('etudiants', 'promotions.id', '=', 'etudiants.promotion_id')
+            ->leftJoin('rapports', 'etudiants.id', '=', 'rapports.etudiant_id')
+            ->select(
+                'promotions.id',
+                'promotions.annee',
+                'promotions.libelle',
+                DB::raw('COUNT(rapports.id) as total_rapports'),
+                DB::raw('AVG(COALESCE(rapports.taux_plagiat, 0)) as taux_plagiat_moyen')
+            )
+            ->groupBy('promotions.id', 'promotions.annee', 'promotions.libelle')
+            ->orderBy('promotions.annee', 'desc')
+            ->get();
+
+        return response()->json($stats);
+    }
+
+    /**
+     * Statistiques globales et meilleure filière
+     */
+    public function global(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        $totalRapports = Rapport::count();
+        $totalEtudiants = Etudiant::count();
+        
+        $tauxMoyen = Rapport::avg('taux_plagiat') ?? 0;
+
+        // Meilleure filière (taux de plagiat le plus bas, avec au moins un rapport)
+        $meilleureFiliere = DB::table('filieres')
+            ->join('etudiants', 'filieres.id', '=', 'etudiants.filiere_id')
+            ->join('rapports', 'etudiants.id', '=', 'rapports.etudiant_id')
+            ->select(
+                'filieres.nom',
+                DB::raw('AVG(rapports.taux_plagiat) as taux_moyen')
+            )
+            ->groupBy('filieres.id', 'filieres.nom')
+            ->orderBy('taux_moyen', 'asc')
+            ->first();
+
+        // Rapports validés/rejetés
+        $rapportsValides = Rapport::where('statut', 'VALIDE_FINAL')->count();
+        $rapportsRejetes = Rapport::where('statut', 'REJETE_FINAL')->count();
+
+        return response()->json([
+            'total_rapports' => $totalRapports,
+            'total_etudiants' => $totalEtudiants,
+            'taux_plagiat_moyen' => round($tauxMoyen, 2),
+            'meilleure_filiere' => $meilleureFiliere,
+            'rapports_valides' => $rapportsValides,
+            'rapports_rejetes' => $rapportsRejetes
+        ]);
     }
 }

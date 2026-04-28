@@ -251,4 +251,21 @@ class RapportController extends Controller
                 ->get()
         );
     }
+
+    /**
+     * Archivage en masse par promotion (Admin)
+     */
+    public function archiverParPromotion(Request $request)
+    {
+        $request->validate(['promotion_id' => 'required|exists:promotions,id']);
+
+        $count = Rapport::whereHas('etudiant', function($q) use ($request) {
+            $q->where('promotion_id', $request->promotion_id);
+        })->update(['archive' => true]);
+
+        return response()->json([
+            'message' => "{$count} rapports ont été archivés pour cette promotion.",
+            'archived_count' => $count
+        ]);
+    }
 }
